@@ -3,7 +3,7 @@ import numpy as np
 import os
 import fnmatch
 import matplotlib.pyplot as plt
-from Elements import ELEMENT_COLOURS
+from cp2k_utils.Elements import ELEMENT_COLOURS
 
 
 HEADER_MATCH = re.compile(
