@@ -208,17 +208,17 @@ def pdos_plot(elements,spin=True,sigma=0.003):
         plt.xlabel('Energy (eV)', size=20) 
         plt.ylabel('Denisty of States (arb.)', size=20)
 
-        plt.plot(x, s, marker = '',c=colours[0], label=f'{elements[n-1]}_s')
-        plt.plot(x, s_2, marker = '',c=colours[0])
+        plt.plot(x, s, marker = '',c=ELEMENT_COLOURS[elements[j-1]],linestyle='solid', label=f'{elements[n-1]}_s')
+        plt.plot(x, s_2, marker = '',c=ELEMENT_COLOURS[elements[j-1]],linestyle='solid')
         if orbs >= 2:
-            plt.plot(x, p, marker = '', label=f'{elements[n-1]}_p',c=colours[1])
-            plt.plot(x, p_2, marker = '',c=colours[1])
+            plt.plot(x, p, marker = '', label=f'{elements[n-1]}_p',c=ELEMENT_COLOURS[elements[j-1]],linestyle='dashed')
+            plt.plot(x, p_2, marker = '',c=ELEMENT_COLOURS[elements[j-1]],linestyle='dashed')
             if orbs >= 3:
-                plt.plot(x, d, marker = '', label=f'{elements[n-1]}_d',c=colours[2])
-                plt.plot(x, d_2, marker = '',c=colours[2])
+                plt.plot(x, d, marker = '', label=f'{elements[n-1]}_d',c=ELEMENT_COLOURS[elements[j-1]],linestyle='dotted')
+                plt.plot(x, d_2, marker = '',c=ELEMENT_COLOURS[elements[j-1]],linestyle='dotted')
                 if orbs >= 4:
-                    plt.plot(x, f, marker = '', label=f'{elements[n-1]}_f',c=colours[3])
-                    plt.plot(x, f_2, marker = '',c=colours[3])
+                    plt.plot(x, f, marker = '', label=f'{elements[n-1]}_f',c=ELEMENT_COLOURS[elements[j-1],linestyle='dashdot']
+                    plt.plot(x, f_2, marker = '',c=ELEMENT_COLOURS[elements[j-1]],linestyle='dashdot')
 
         plt.axvline(x=0, color='k', linestyle='--')
 
