@@ -1,8 +1,8 @@
 def lighten_hex_colour(hex_colour, factor=0.2):
     # Convert hex colour to RGB components
-    r = int(hex_colour[2:4], 16)
-    g = int(hex_colour[4:6], 16)
-    b = int(hex_colour[6:8], 16)
+    r = int(hex_colour[1:3], 16)
+    g = int(hex_colour[3:5], 16)
+    b = int(hex_colour[5:7], 16)
     
     # Increase the values of RGB components to lighten the colour
     r = min(255, int(r * (1 + factor)))
