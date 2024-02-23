@@ -208,24 +208,28 @@ def pdos_plot(elements,spin=True,sigma=0.003):
         plt.xlabel('Energy (eV)', size=20) 
         plt.ylabel('Denisty of States (arb.)', size=20)
 
+        xmin=-3
+        xmax=6
+
         plt.plot(x, s, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid', label=f'{elements[n-1]}_s')
         plt.plot(x, s_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid')
-        ymax = max(max(s), max(s_2, key=abs))
+        
+        ymax = max(max([y for x, y in zip(x, s) if xmin <= x <= xmax]), max([y for x, y in zip(x, s_2) if xmin <= x <= xmax], key=abs))
         print(ymax)
         if orbs >= 2:
             plt.plot(x, p, marker = '', label=f'{elements[n-1]}_p',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dashed')
             plt.plot(x, p_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dashed')
-            ymax = max(ymax, max(p), max(p_2, key=abs))
+            ymax = max(ymax, max([y for x, y in zip(x, p) if xmin <= x <= xmax]), max([y for x, y in zip(x, p_2) if xmin <= x <= xmax], key=abs))
             print(ymax)
             if orbs >= 3:
                 plt.plot(x, d, marker = '', label=f'{elements[n-1]}_d',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dotted')
                 plt.plot(x, d_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dotted')
-                ymax = max(ymax, max(d), max(d_2, key=abs))
+                ymax = max(ymax, max([y for x, y in zip(x, d) if xmin <= x <= xmax]), max([y for x, y in zip(x, d_2) if xmin <= x <= xmax], key=abs))
                 print(ymax)
                 if orbs >= 4:
                     plt.plot(x, f, marker = '', label=f'{elements[n-1]}_f',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dashdot')
                     plt.plot(x, f_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dashdot')
-                    ymax = max(ymax, max(f), max(f_2, key=abs))
+                    ymax = max(ymax, max([y for x, y in zip(x, f) if xmin <= x <= xmax]), max([y for x, y in zip(x, f_2) if xmin <= x <= xmax], key=abs))
                     print(ymax)
 
         plt.axvline(x=0, color='k', linestyle='--')
@@ -237,7 +241,7 @@ def pdos_plot(elements,spin=True,sigma=0.003):
         #plt.yticks(np.linspace(-1.0,1.0,21))
         #plt.xticks(np.linspace(-3,6,37))
         
-        plt.xlim([-3,6])
+        plt.xlim([xmin,xmax])
         plt.ylim([-ymax,ymax])
 
         plt.legend(markerscale=10.0, fontsize=20)
