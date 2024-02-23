@@ -3,6 +3,7 @@ import numpy as np
 import os
 import fnmatch
 import matplotlib.pyplot as plt
+from Elements import ELEMENT_COLOURS
 
 
 HEADER_MATCH = re.compile(
@@ -245,8 +246,8 @@ def pdos_plot(elements,spin=True,sigma=0.003):
 
     j=1
     while j <= len(elements):
-        plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot'], marker = '',c=colours[j-1], label=f'{elements[j-1]}')
-        plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot'],c=colours[j-1], marker = '')
+        plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot'], marker = '',c=ELEMENT_COLOURS[elements[j-1]], label=f'{elements[j-1]}')
+        plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot'],c=ELEMENT_COLOURS[elements[j-1]], marker = '')
         j=j+1
 
     plt.axvline(x=0, color='k', linestyle='--')
