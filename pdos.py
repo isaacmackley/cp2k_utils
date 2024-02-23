@@ -217,7 +217,7 @@ def pdos_plot(elements,spin=True,sigma=0.003):
                 plt.plot(x, d, marker = '', label=f'{elements[n-1]}_d',c=ELEMENT_COLOURS[elements[j-1]],linestyle='dotted')
                 plt.plot(x, d_2, marker = '',c=ELEMENT_COLOURS[elements[j-1]],linestyle='dotted')
                 if orbs >= 4:
-                    plt.plot(x, f, marker = '', label=f'{elements[n-1]}_f',c=ELEMENT_COLOURS[elements[j-1],linestyle='dashdot'])
+                    plt.plot(x, f, marker = '', label=f'{elements[n-1]}_f',c=ELEMENT_COLOURS[elements[j-1]],linestyle='dashdot')
                     plt.plot(x, f_2, marker = '',c=ELEMENT_COLOURS[elements[j-1]],linestyle='dashdot')
 
         plt.axvline(x=0, color='k', linestyle='--')
