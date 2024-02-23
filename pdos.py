@@ -234,6 +234,7 @@ def pdos_plot(elements,spin=True,sigma=0.003):
         plt.grid(visible=1)
 
         ymax = np.ceil(ymax*10)/10
+        print(ymax)
 
         plt.yticks(np.linspace(-ymax,ymax,(ymax*40)+1))
         plt.xticks(np.linspace(xmin,xmax,((abs(xmin)+xmax)*10)+1))
