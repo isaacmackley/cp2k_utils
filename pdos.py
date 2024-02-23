@@ -223,7 +223,7 @@ def pdos_plot(elements,spin=True,sigma=0.003):
                 if orbs >= 4:
                     plt.plot(x, f, marker = '', label=f'{elements[n-1]}_f',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.5),linestyle='solid')
                     plt.plot(x, f_2, marker = '',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.5),linestyle='solid')
-                    ymax = max(ymax, max([y for x, y in zip(x, f) if xmin <= x <= xmax]), max([y for x, y in zip(x, f_2) if xmin <= x <= xmax], key=abs)))
+                    ymax = max(ymax, max([y for x, y in zip(x, f) if xmin <= x <= xmax]), max([y for x, y in zip(x, f_2) if xmin <= x <= xmax], key=abs))
 
         plt.axvline(x=0, color='k', linestyle='--')
 
@@ -233,7 +233,7 @@ def pdos_plot(elements,spin=True,sigma=0.003):
 
         if ymax > 1.0:
             plt.yticks(np.linspace(-ymax,ymax,int(ymax*10)+1))
-        if ymax > 0.5:
+        if 0.5 < ymax <= 1.0:
             plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1))
         if 0.2 < ymax <= 0.5:
             plt.yticks(np.linspace(-ymax,ymax,int(ymax*40)+1))
@@ -279,7 +279,7 @@ def pdos_plot(elements,spin=True,sigma=0.003):
     
     if ymax > 1.0:
         plt.yticks(np.linspace(-ymax,ymax,int(ymax*10)+1))
-    if ymax > 0.5:
+    if 0.5 < ymax <= 1.0:
         plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1))
     if 0.2 < ymax <= 0.5:
         plt.yticks(np.linspace(-ymax,ymax,int(ymax*40)+1))
