@@ -236,8 +236,8 @@ def pdos_plot(elements,spin=True,sigma=0.003):
         ymax = np.ceil(ymax*10)/10
         print(ymax)
 
-        plt.yticks(np.linspace(-ymax,ymax,int(ymax*40)+1))
-        plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*10)+1))
+        plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1))
+        plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1))
         
         plt.xlim([xmin,xmax])
         plt.ylim([-ymax,ymax])
