@@ -208,22 +208,21 @@ def pdos_plot(elements,spin=True,sigma=0.003):
         plt.xlabel('Energy (eV)', size=20) 
         plt.ylabel('Denisty of States (arb.)', size=20)
 
-        ymax = max(max(s), max(abs(s_2)))
-
         plt.plot(x, s, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid', label=f'{elements[n-1]}_s')
         plt.plot(x, s_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid')
+        ymax = max(max(s), max(s_2, key=abs))
         if orbs >= 2:
             plt.plot(x, p, marker = '', label=f'{elements[n-1]}_p',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dashed')
             plt.plot(x, p_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dashed')
-            ymax = max(ymax, max(p), max(abs(p_2)))
+            ymax = max(ymax, max(p), max(p_2, key=abs))
             if orbs >= 3:
                 plt.plot(x, d, marker = '', label=f'{elements[n-1]}_d',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dotted')
                 plt.plot(x, d_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dotted')
-                ymax = max(ymax, max(d), max(abs(d_2)))
+                ymax = max(ymax, max(d), max(d_2, key=abs))
                 if orbs >= 4:
                     plt.plot(x, f, marker = '', label=f'{elements[n-1]}_f',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dashdot')
                     plt.plot(x, f_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='dashdot')
-                    ymax = max(ymax, max(f), max(abs(f_2)))
+                    ymax = max(ymax, max(f), max(f_2, key=abs))
 
         plt.axvline(x=0, color='k', linestyle='--')
 
