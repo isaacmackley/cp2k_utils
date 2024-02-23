@@ -12,9 +12,6 @@ HEADER_MATCH = re.compile(
 EIGENVALUE_COLUMN = 1
 DENSITY_COLUMN = 3
 
-#colours = ['#0DAA00','#B20808','#053AD1']
-colours = ['g','r','b','m']
-
 
 def smeared_pdos(pdosfilenames, sigma=0.02, de=0.001, scale=1, total_sum=False, no_header=False, output=None):
     alldata = []
@@ -258,8 +255,14 @@ def pdos_plot(elements,spin=True,sigma=0.003):
     plt.xlabel('Energy (eV)', size=20) 
     plt.ylabel('Denisty of States (arb.)', size=20)
 
+    xmin=-3
+    xmax=6
+
+    ymax = max(max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_beta_tot']) if xmin <= x <= xmax], key=abs))
+    
     j=1
     while j <= len(elements):
+        ymax = max(ymax,max([y for x, y in zip(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot']) if xmin <= x <= xmax], key=abs))
         plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot'], marker = '',c=ELEMENT_COLOURS[elements[j-1]], label=f'{elements[j-1]}')
         plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot'],c=ELEMENT_COLOURS[elements[j-1]], marker = '')
         j=j+1
@@ -271,8 +274,8 @@ def pdos_plot(elements,spin=True,sigma=0.003):
     #plt.yticks(np.linspace(-1.0,1.0,21))
     #plt.xticks(np.linspace(-3,6,37))
 
-    plt.xlim([-3,6])
-    #plt.ylim([-1.0,1.0])
+    plt.xlim([xmin,xmax])
+    plt.ylim([-ymax,ymax])
 
     plt.legend(markerscale=10.0, fontsize=20)
 
