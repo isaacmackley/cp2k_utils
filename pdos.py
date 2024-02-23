@@ -212,30 +212,27 @@ def pdos_plot(elements,spin=True,sigma=0.003):
         plt.plot(x, s_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid')
         
         ymax = max(max([y for x, y in zip(x, s) if xmin <= x <= xmax]), max([y for x, y in zip(x, s_2) if xmin <= x <= xmax], key=abs))
-        print(ymax)
         if orbs >= 2:
             plt.plot(x, p, marker = '', label=f'{elements[n-1]}_p',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=0.5),linestyle='solid')
             plt.plot(x, p_2, marker = '',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=0.5),linestyle='solid')
             ymax = max(ymax, max([y for x, y in zip(x, p) if xmin <= x <= xmax]), max([y for x, y in zip(x, p_2) if xmin <= x <= xmax], key=abs))
-            print(ymax)
             if orbs >= 3:
                 plt.plot(x, d, marker = '', label=f'{elements[n-1]}_d',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.2),linestyle='solid')
                 plt.plot(x, d_2, marker = '',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.2),linestyle='solid')
                 ymax = max(ymax, max([y for x, y in zip(x, d) if xmin <= x <= xmax]), max([y for x, y in zip(x, d_2) if xmin <= x <= xmax], key=abs))
-                print(ymax)
                 if orbs >= 4:
                     plt.plot(x, f, marker = '', label=f'{elements[n-1]}_f',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.5),linestyle='solid')
                     plt.plot(x, f_2, marker = '',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.5),linestyle='solid')
-                    ymax = max(ymax, max([y for x, y in zip(x, f) if xmin <= x <= xmax]), max([y for x, y in zip(x, f_2) if xmin <= x <= xmax], key=abs))
-                    print(ymax)
+                    ymax = max(ymax, max([y for x, y in zip(x, f) if xmin <= x <= xmax]), max([y for x, y in zip(x, f_2) if xmin <= x <= xmax], key=abs)))
 
         plt.axvline(x=0, color='k', linestyle='--')
 
         plt.grid(visible=1)
 
         ymax = np.ceil(ymax*10)/10
-        print(ymax)
 
+        if ymax > 1.0:
+            plt.yticks(np.linspace(-ymax,ymax,int(ymax*10)+1))
         if ymax > 0.5:
             plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1))
         if 0.2 < ymax <= 0.5:
@@ -280,8 +277,16 @@ def pdos_plot(elements,spin=True,sigma=0.003):
 
     ymax = np.ceil(ymax*10)/10
     
-    #plt.yticks(np.linspace(-1.0,1.0,21))
-    #plt.xticks(np.linspace(-3,6,37))
+    if ymax > 1.0:
+        plt.yticks(np.linspace(-ymax,ymax,int(ymax*10)+1))
+    if ymax > 0.5:
+        plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1))
+    if 0.2 < ymax <= 0.5:
+        plt.yticks(np.linspace(-ymax,ymax,int(ymax*40)+1))
+    if ymax <= 0.2:
+        plt.yticks(np.linspace(-ymax,ymax,int(ymax*80)+1))
+        
+    plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1))
 
     plt.xlim([xmin,xmax])
     plt.ylim([-ymax,ymax])
