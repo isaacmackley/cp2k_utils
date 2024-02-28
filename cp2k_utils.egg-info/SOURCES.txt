@@ -1,0 +1,8 @@
+README.md
+setup.py
+cp2k_utils.egg-info/PKG-INFO
+cp2k_utils.egg-info/SOURCES.txt
+cp2k_utils.egg-info/dependency_links.txt
+cp2k_utils.egg-info/entry_points.txt
+cp2k_utils.egg-info/requires.txt
+cp2k_utils.egg-info/top_level.txt

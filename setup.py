@@ -8,7 +8,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'xyz-to-cif = cli.structures:main',
+            'xyz-to-cif = cp2k_utils.cli.structures:main',
         ],
     },
     install_requires=[
