@@ -1,5 +1,5 @@
 ELEMENT_COLOURS = {
-  "H":		"#FFFFFF",
+"H":		"#FFFFFF",
 "He":		"#D9FFFF",
 "Li":		"#CC80FF",
 "Be":		"#C2FF00",
