@@ -9,6 +9,7 @@ setup(
     entry_points={
         'console_scripts': [
             'xyz-to-cif = cp2k_utils.cli.structures:main',
+            'pdos-plot = cp2k_utils.cli.pdos:main'
         ],
     },
     install_requires=[
