@@ -1,2 +1,3 @@
 [console_scripts]
+pdos-plot = cp2k_utils.cli.pdos:main
 xyz-to-cif = cp2k_utils.cli.structures:main
