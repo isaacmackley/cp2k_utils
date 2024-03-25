@@ -204,6 +204,7 @@ def pdos_plot(elements,spin=True,sigma=0.003):
         plt.title(f"{elements[n-1]} Density of States", size=30) 
         plt.xlabel('Energy (eV)', size=20) 
         plt.ylabel('Denisty of States (arb.)', size=20)
+        plt.axes().set_facecolur('#BCC2C3')
 
         xmin=-3
         xmax=6
@@ -258,6 +259,7 @@ def pdos_plot(elements,spin=True,sigma=0.003):
     plt.title("Total Density of States", size=30) 
     plt.xlabel('Energy (eV)', size=20) 
     plt.ylabel('Denisty of States (arb.)', size=20)
+    plt.axes().set_facecolur('#BCC2C3')
 
     xmin=-3
     xmax=6
