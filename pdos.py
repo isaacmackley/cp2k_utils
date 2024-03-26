@@ -106,7 +106,7 @@ def pdos_all(elements,spin=True,sigma=0.003,output=True):
 
 
 
-def pdos_plot(elements,spin=True,sigma=0.003):
+def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
     """
     
     """
@@ -200,14 +200,14 @@ def pdos_plot(elements,spin=True,sigma=0.003):
         plots[f'{element_name}_beta_tot']  = sum(map(np.array, y_2))
 
 
-        plt.figure(figsize=(25,10))
+        plt.figure(figsize=(25,10))#.set_facecolor('#BCC2C3')
         plt.title(f"{elements[n-1]} Density of States", size=30) 
         plt.xlabel('Energy (eV)', size=20) 
         plt.ylabel('Denisty of States (arb.)', size=20)
-        plt.axes().set_facecolur('#BCC2C3')
 
-        xmin=-3
-        xmax=6
+
+        plt.axvline(x=0, color='k', linestyle='--')
+        plt.axhline(y=0, color='k', linestyle='--')
 
         plt.plot(x, s, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid', label=f'{elements[n-1]}_s')
         plt.plot(x, s_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid')
@@ -226,25 +226,36 @@ def pdos_plot(elements,spin=True,sigma=0.003):
                     plt.plot(x, f_2, marker = '',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.5),linestyle='solid')
                     ymax = max(ymax, max([y for x, y in zip(x, f) if xmin <= x <= xmax]), max([y for x, y in zip(x, f_2) if xmin <= x <= xmax], key=abs))
 
-        plt.axvline(x=0, color='k', linestyle='--')
+        if grid==True:
+            plt.grid(visible=1)
 
-        plt.grid(visible=1)
+        if ymax >= 0.1:
+            ymax = np.ceil(ymax*10)/10
+        else:
+            ymax = np.ceil(ymax*100)/100
 
-        ymax = np.ceil(ymax*10)/10
 
         if ymax > 1.0:
             plt.yticks(np.linspace(-ymax,ymax,int(ymax*10)+1))
-        if 0.5 < ymax <= 1.0:
+        elif 0.5 < ymax <= 1.0:
             plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1))
-        if 0.2 < ymax <= 0.5:
+        elif 0.2 < ymax <= 0.5:
             plt.yticks(np.linspace(-ymax,ymax,int(ymax*40)+1))
-        if ymax <= 0.2:
+        elif 0.05 < ymax <= 0.2:
             plt.yticks(np.linspace(-ymax,ymax,int(ymax*80)+1))
+        elif 0.02 < ymax <= 0.05:
+            plt.yticks(np.linspace(-ymax,ymax,int(ymax*400)+1))
+        else:
+            plt.yticks(np.linspace(-ymax,ymax,int(ymax*1000)+1))
         
-        plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1))
+        if grid==True:
+            plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1))
+        else:
+            plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax))+1))
         
         plt.xlim([xmin,xmax])
         plt.ylim([-ymax,ymax])
+
 
         plt.legend(markerscale=10.0, fontsize=20)
 
@@ -259,13 +270,12 @@ def pdos_plot(elements,spin=True,sigma=0.003):
     plt.title("Total Density of States", size=30) 
     plt.xlabel('Energy (eV)', size=20) 
     plt.ylabel('Denisty of States (arb.)', size=20)
-    plt.axes().set_facecolur('#BCC2C3')
-
-    xmin=-3
-    xmax=6
 
     ymax = max(max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_beta_tot']) if xmin <= x <= xmax], key=abs))
     
+    plt.axvline(x=0, color='k', linestyle='--')
+    plt.axhline(y=0, color='k', linestyle='--')
+
     j=1
     while j <= len(elements):
         ymax = max(ymax,max([y for x, y in zip(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot']) if xmin <= x <= xmax], key=abs))
@@ -273,9 +283,8 @@ def pdos_plot(elements,spin=True,sigma=0.003):
         plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot'],c=ELEMENT_COLOURS[elements[j-1]], marker = '')
         j=j+1
 
-    plt.axvline(x=0, color='k', linestyle='--')
-
-    plt.grid(visible=1)
+    if grid==True:
+        plt.grid(visible=1)
 
     ymax = np.ceil(ymax*10)/10
     
@@ -288,7 +297,10 @@ def pdos_plot(elements,spin=True,sigma=0.003):
     if ymax <= 0.2:
         plt.yticks(np.linspace(-ymax,ymax,int(ymax*80)+1))
         
-    plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1))
+    if grid==True:
+            plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1))
+    else:
+            plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax))+1))
 
     plt.xlim([xmin,xmax])
     plt.ylim([-ymax,ymax])
