@@ -228,6 +228,8 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
 
         if grid==True:
             plt.grid(visible=1)
+        else:
+            plt.grid(visible=0)
 
         if ymax >= 0.1:
             ymax = np.ceil(ymax*10)/10
@@ -285,6 +287,8 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
 
     if grid==True:
         plt.grid(visible=1)
+    else:
+        plt.grid(visible=0)
 
     ymax = np.ceil(ymax*10)/10
     
