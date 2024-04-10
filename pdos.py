@@ -237,19 +237,19 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
             ymax = np.ceil(ymax*100)/100
 
 
-        if ymax > 1.0:
-            plt.yticks(np.linspace(-ymax,ymax,int(ymax*10)+1))
-        elif 0.5 < ymax <= 1.0:
-            plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1))
-        elif 0.2 < ymax <= 0.5:
-            plt.yticks(np.linspace(-ymax,ymax,int(ymax*40)+1))
-        elif 0.05 < ymax <= 0.2:
-            plt.yticks(np.linspace(-ymax,ymax,int(ymax*80)+1))
-        elif 0.02 < ymax <= 0.05:
-            plt.yticks(np.linspace(-ymax,ymax,int(ymax*400)+1))
-        else:
-            plt.yticks(np.linspace(-ymax,ymax,int(ymax*1000)+1))
-        
+        #if ymax > 1.0:
+        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*5)+1),labels=[])
+        #elif 0.5 < ymax <= 1.0:
+        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1),labels=[])
+        #elif 0.2 < ymax <= 0.5:
+        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*40)+1),labels=[])
+        #elif 0.05 < ymax <= 0.2:
+        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*80)+1),labels=[])
+        #elif 0.02 < ymax <= 0.05:
+        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*400)+1),labels=[])
+        #else:
+        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*1000)+1),labels=[])
+        plt.yticks([])
         if grid==True:
             plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1))
         else:
@@ -292,14 +292,14 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
 
     ymax = np.ceil(ymax*10)/10
     
-    if ymax > 1.0:
-        plt.yticks(np.linspace(-ymax,ymax,int(ymax*10)+1))
-    if 0.5 < ymax <= 1.0:
-        plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1))
-    if 0.2 < ymax <= 0.5:
-        plt.yticks(np.linspace(-ymax,ymax,int(ymax*40)+1))
-    if ymax <= 0.2:
-        plt.yticks(np.linspace(-ymax,ymax,int(ymax*80)+1))
+    #if ymax > 1.0:
+    #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*5)+1),labels=[])
+    #if 0.5 < ymax <= 1.0:
+    #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1),labels=[])
+    #if 0.2 < ymax <= 0.5:
+    #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*40)+1),labels=[])
+    #if ymax <= 0.2:
+    #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*80)+1),labels=[])
         
     if grid==True:
             plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1))
