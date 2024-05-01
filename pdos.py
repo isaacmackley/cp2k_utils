@@ -16,18 +16,20 @@ DENSITY_COLUMN = 3
 def smeared_pdos(pdosfilenames, sigma=0.02, de=0.001, scale=1, total_sum=False, no_header=False, output=None):
     alldata = []
     orb_headers = []
+    efermi = -1000
 
     for pdosfilename in pdosfilenames:
         with open(pdosfilename, 'r') as fhandle:
             match = HEADER_MATCH.match(fhandle.readline().rstrip())
             if not match:
                 raise ValueError(f"The file '{pdosfilename}' does not look like a CP2K PDOS output.")
-            efermi = float(match.group('Efermi'))
+            fermi = float(match.group('Efermi'))
             header = fhandle.readline().rstrip().split()[1:]
             header[1:3] = [' '.join(header[1:3])]
             data = np.loadtxt(fhandle)
         alldata.append(data)
         orb_headers += header[DENSITY_COLUMN:]
+        efermi = max(efermi, fermi)
 
     margin = 10 * sigma
     emin = min(np.min(data[:, EIGENVALUE_COLUMN]) for data in alldata) - margin
@@ -206,8 +208,8 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
         plt.ylabel('Denisty of States (arb.)', size=20)
 
 
-        plt.axvline(x=0, color='k', linestyle='--')
-        plt.axhline(y=0, color='k', linestyle='--')
+        plt.axvline(x=0, color='k', linestyle='--', alpha=0.5)
+        plt.axhline(y=0, color='k', linestyle='-', alpha=0.5)
 
         plt.plot(x, s, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid', label=f'{elements[n-1]}_s')
         plt.plot(x, s_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid')
@@ -237,19 +239,19 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
             ymax = np.ceil(ymax*100)/100
 
 
-        #if ymax > 1.0:
-        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*5)+1),labels=[])
-        #elif 0.5 < ymax <= 1.0:
-        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1),labels=[])
-        #elif 0.2 < ymax <= 0.5:
-        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*40)+1),labels=[])
-        #elif 0.05 < ymax <= 0.2:
-        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*80)+1),labels=[])
-        #elif 0.02 < ymax <= 0.05:
-        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*400)+1),labels=[])
-        #else:
-        #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*1000)+1),labels=[])
-        plt.yticks([])
+        if ymax > 1.0:
+            plt.yticks(np.linspace(-ymax,ymax,int(((ymax*5) + 1)/2)*2 + 1),labels=[])
+        elif 0.5 < ymax <= 1.0:
+            plt.yticks(np.linspace(-ymax,ymax,int(((ymax*20) + 1)/2)*2 + 1),labels=[])
+        elif 0.2 < ymax <= 0.5:
+            plt.yticks(np.linspace(-ymax,ymax,int(((ymax*40) + 1)/2)*2 + 1),labels=[])
+        elif 0.05 < ymax <= 0.2:
+            plt.yticks(np.linspace(-ymax,ymax,int(((ymax*80) + 1)/2)*2 + 1),labels=[])
+        elif 0.02 < ymax <= 0.05:
+            plt.yticks(np.linspace(-ymax,ymax,int(((ymax*400) + 1)/2)*2 + 1),labels=[])
+        else:
+           plt.yticks(np.linspace(-ymax,ymax,int(((ymax*1000) + 1)/2)*2 + 1),labels=[])
+        #plt.yticks([])
         if grid==True:
             plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1))
         else:
@@ -261,7 +263,7 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
 
         plt.legend(markerscale=10.0, fontsize=20)
 
-        plt.savefig(f'{elements[n-1]} Density of States')
+        plt.savefig(f'{elements[n-1]} Density of States', bbox_inches='tight')
 
         plt.show()
 
@@ -275,8 +277,8 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
 
     ymax = max(max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_beta_tot']) if xmin <= x <= xmax], key=abs))
     
-    plt.axvline(x=0, color='k', linestyle='--')
-    plt.axhline(y=0, color='k', linestyle='--')
+    plt.axvline(x=0, color='k', linestyle='--', alpha=0.5)
+    plt.axhline(y=0, color='k', linestyle='-', alpha=0.5)
 
     j=1
     while j <= len(elements):
@@ -292,14 +294,14 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
 
     ymax = np.ceil(ymax*10)/10
     
-    #if ymax > 1.0:
-    #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*5)+1),labels=[])
-    #if 0.5 < ymax <= 1.0:
-    #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*20)+1),labels=[])
-    #if 0.2 < ymax <= 0.5:
-    #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*40)+1),labels=[])
-    #if ymax <= 0.2:
-    #    plt.yticks(np.linspace(-ymax,ymax,int(ymax*80)+1),labels=[])
+    if ymax > 1.0:
+        plt.yticks(np.linspace(-ymax,ymax,int(((ymax*5) + 1)/2)*2 + 1),labels=[])
+    if 0.5 < ymax <= 1.0:
+        plt.yticks(np.linspace(-ymax,ymax,int(((ymax*20) + 1)/2)*2 + 1),labels=[])
+    if 0.2 < ymax <= 0.5:
+        plt.yticks(np.linspace(-ymax,ymax,int(((ymax*40) + 1)/2)*2 + 1),labels=[])
+    if ymax <= 0.2:
+        plt.yticks(np.linspace(-ymax,ymax,int(((ymax*80) + 1)/2)*2 + 1),labels=[])
         
     if grid==True:
             plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1))
@@ -311,6 +313,6 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
 
     plt.legend(markerscale=10.0, fontsize=20)
 
-    plt.savefig('Total Density of States')
+    plt.savefig('Total Density of States', bbox_inches='tight')
 
     plt.show()

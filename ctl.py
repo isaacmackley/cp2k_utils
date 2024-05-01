@@ -21,7 +21,7 @@ def plot_ctl(defects,bulk,vbm,cbm):
 
     xmax=round((E_cbm-E_vbm)+1)
     #E_fermi = np.linspace(vbm-1,cbm+1,)
-    E_fermi = np.linspace(-1,xmax,(xmax+2))
+    E_fermi = np.linspace(-1,xmax,((xmax+1)*100)+1)
 
     
     types = {}
@@ -123,7 +123,7 @@ def plot_ctl(defects,bulk,vbm,cbm):
         if ymin == 0 or ymax == 0:
             plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1))
         else:
-            if ymin/ymin == ymax/ymax:
+            if ymin/abs(ymin) == ymax/abs(ymax):
                 plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)-1))
             else:
                 plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1))
@@ -172,6 +172,13 @@ def plot_ctl(defects,bulk,vbm,cbm):
     plt.xlim([-1,xmax])
     plt.ylim([ymin,ymax])
     plt.xticks(np.linspace(-1,xmax,abs(xmax)+2))
+    if ymin == 0 or ymax == 0:
+            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1))
+    else:
+        if ymin/abs(ymin) == ymax/abs(ymax):
+            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)-1))
+        else:
+            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1))
 
     plt.legend(markerscale=5.0, fontsize=15, loc='upper left')
 
