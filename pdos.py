@@ -80,7 +80,7 @@ def pdos_all(elements,spin=True,sigma=0.003,output=True):
     """
     
     """
-
+    
         
     k=0
 
@@ -108,7 +108,7 @@ def pdos_all(elements,spin=True,sigma=0.003,output=True):
 
 
 
-def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
+def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw=25,figh=10):
     """
     
     """
@@ -202,14 +202,17 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
         plots[f'{element_name}_beta_tot']  = sum(map(np.array, y_2))
 
 
-        plt.figure(figsize=(25,10))#.set_facecolor('#BCC2C3')
+        plt.figure(figsize=(figw,figh))#.set_facecolor('#BCC2C3')
         plt.title(f"{elements[n-1]} Density of States", size=30) 
         plt.xlabel('Energy (eV)', size=20) 
         plt.ylabel('Denisty of States (arb.)', size=20)
 
 
+        plt.axvline(x=vbm, color='k', linestyle='--', alpha=0.5)
+
         plt.axvline(x=0, color='k', linestyle='--', alpha=0.5)
         plt.axhline(y=0, color='k', linestyle='-', alpha=0.5)
+        
 
         plt.plot(x, s, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid', label=f'{elements[n-1]}_s')
         plt.plot(x, s_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid')
@@ -270,21 +273,23 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
         n=n+1
 
     
-    plt.figure(figsize=(25,10))
-    plt.title("Total Density of States", size=30) 
-    plt.xlabel('Energy (eV)', size=20) 
-    plt.ylabel('Denisty of States (arb.)', size=20)
+    plt.figure(figsize=(figw,figh))
+    plt.title("Total Density of States", size=40) 
+    plt.xlabel('Energy (eV)', size=30) 
+    plt.ylabel('Denisty of States (arb.)', size=30)
 
     ymax = max(max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_beta_tot']) if xmin <= x <= xmax], key=abs))
     
+    plt.axvline(x=vbm, color='k', linestyle='--', alpha=0.5)
+
     plt.axvline(x=0, color='k', linestyle='--', alpha=0.5)
     plt.axhline(y=0, color='k', linestyle='-', alpha=0.5)
 
     j=1
     while j <= len(elements):
         ymax = max(ymax,max([y for x, y in zip(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot']) if xmin <= x <= xmax], key=abs))
-        plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot'], marker = '',c=ELEMENT_COLOURS[elements[j-1]], label=f'{elements[j-1]}')
-        plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot'],c=ELEMENT_COLOURS[elements[j-1]], marker = '')
+        plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot'], marker = '',lw=2,c=ELEMENT_COLOURS[elements[j-1]], label=f'{elements[j-1]}')
+        plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot'],lw=2,c=ELEMENT_COLOURS[elements[j-1]], marker = '')
         j=j+1
 
     if grid==True:
@@ -304,9 +309,9 @@ def pdos_plot(elements,spin=True,sigma=0.003,grid=True,xmin=-3,xmax=6):
         plt.yticks(np.linspace(-ymax,ymax,int(((ymax*80) + 1)/2)*2 + 1),labels=[])
         
     if grid==True:
-            plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1))
+            plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax)*4)+1),fontsize=20)
     else:
-            plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax))+1))
+            plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax))+1),fontsize=20)
 
     plt.xlim([xmin,xmax])
     plt.ylim([-ymax,ymax])

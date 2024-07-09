@@ -28,3 +28,7 @@ def int_gen(cube_file, specie, output_filename, int_no=10):
         structures[i+1] = structure.append(species=ints[0][i],coords=ints[1][i])
         CifWriter(structures[i+1]).write_file(f'{output_filename}{i+1}.cif')
         i=i+1
+    
+    structure = volumetric_data.structure
+    structure = structure.append(species=ints[0], coords=ints[1])
+    CifWriter(structure).write_file(f'{output_filename}.cif')

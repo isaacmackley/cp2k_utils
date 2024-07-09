@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 colors = plt.cm.tab10.colors
 
-def plot_ctl(defects,bulk,vbm,cbm):
+def plot_ctl(defects,bulk,vbm,cbm,customx=False,xxmin=1,xxmax=4,customy=False,yymin=1,yymax=4):
     """
     Plots CTL diagrams for input defects
 
@@ -87,13 +87,13 @@ def plot_ctl(defects,bulk,vbm,cbm):
 
         plt.figure(figsize=(15,10))
         if typegroup[0][5] == 'i':
-            plt.title(f'{typegroup[0][0]}$_{'i'}$ Charge Levels', size=30, pad=30)
+            plt.title(f'{typegroup[0][0]}$_{'i'}$ Charge Levels', size=40, pad=30)
         if typegroup[0][5] == 's':
-            plt.title(f'{typegroup[0][0]}$_{{{typegroup[0][6]}}}$ Charge Levels', size=30, pad=30)
+            plt.title(f'{typegroup[0][0]}$_{{{typegroup[0][6]}}}$ Charge Levels', size=40, pad=30)
         if typegroup[0][5] == 'v':
-            plt.title(f'V$_{{{typegroup[0][6]}}}$ Charge Levels', size=30, pad=30)
-        plt.xlabel('Fermi Energy (eV)', size=20, labelpad=30) 
-        plt.ylabel('Formation Energy (eV)', size=20, labelpad=30)
+            plt.title(f'V$_{{{typegroup[0][6]}}}$ Charge Levels', size=40, pad=30)
+        plt.xlabel('Fermi Energy (eV)', size=30, labelpad=30) 
+        plt.ylabel('Formation Energy (eV)', size=30, labelpad=30)
 
         #VBM and CBM 
         plt.axvline(x=0, color='tab:orange', linestyle='-', alpha=0.5)
@@ -118,20 +118,28 @@ def plot_ctl(defects,bulk,vbm,cbm):
         #plt.plot(E_fermi, x_int, linestyle='--', color='k', lw=2, label='')
 
         #Other details
-        plt.xlim([-1,xmax])
-        plt.ylim([ymin,ymax])
-        plt.xticks(np.linspace(-1,xmax,abs(xmax)+2))
-        if ymin == 0 or ymax == 0:
-            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1))
-        else:
-            if ymin/abs(ymin) == ymax/abs(ymax):
-                plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)-1))
+        if customx == True:
+            plt.xlim([xxmin,xxmax])
+            plt.xticks(np.linspace(xxmin,xxmax,abs(xxmax-xxmin)+1),fontsize=20)
+        if customx == False:
+            plt.xlim([-1,xmax])
+            plt.xticks(np.linspace(-1,xmax,abs(xmax)+2),fontsize=20)
+        if customy == True:
+            plt.ylim([yymin,yymax])
+            plt.yticks(np.linspace(yymin,yymax,abs(yymax-yymin)+1),fontsize=20)
+        if customy == False:
+            plt.ylim([ymin,ymax])
+            if ymin == 0 or ymax == 0:
+                plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1),fontsize=20)
             else:
-                plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1))
+                if ymin/abs(ymin) == ymax/abs(ymax):
+                    plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)-1),fontsize=20)
+                else:
+                    plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1),fontsize=20)
 
         plt.grid(visible=0)#, which='major', axis='both',linestyle='--')
 
-        plt.legend(markerscale=5.0, fontsize=15, loc='upper left')
+        plt.legend(markerscale=8.0, fontsize=20, loc='upper left')
 
         if typegroup[0][5] == 'i':
             plt.savefig(f'{typegroup[0][0]}_i CTL Diagram', bbox_inches='tight')
@@ -144,9 +152,9 @@ def plot_ctl(defects,bulk,vbm,cbm):
     
 
     plt.figure(figsize=(15,10))
-    plt.title('Charge Levels', size=30, pad=30)
-    plt.xlabel('Fermi Energy (eV)', size=20, labelpad=30) 
-    plt.ylabel('Formation Energy (eV)', size=20, labelpad=30)
+    plt.title('Charge Levels', size=40, pad=30)
+    plt.xlabel('Fermi Energy (eV)', size=30, labelpad=30) 
+    plt.ylabel('Formation Energy (eV)', size=30, labelpad=30)
 
 
     ymin=float(1000)
@@ -171,16 +179,16 @@ def plot_ctl(defects,bulk,vbm,cbm):
 
     plt.xlim([-1,xmax])
     plt.ylim([ymin,ymax])
-    plt.xticks(np.linspace(-1,xmax,abs(xmax)+2))
+    plt.xticks(np.linspace(-1,xmax,abs(xmax)+2),fontsize=20)
     if ymin == 0 or ymax == 0:
-            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1))
+            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1),fontsize=20)
     else:
         if ymin/abs(ymin) == ymax/abs(ymax):
-            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)-1))
+            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)-1),fontsize=20)
         else:
-            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1))
+            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1),fontsize=20)
 
-    plt.legend(markerscale=5.0, fontsize=15, loc='upper left')
+    plt.legend(markerscale=5.0, fontsize=20, loc='upper left')
 
     plt.savefig('Charge Levels', bbox_inches='tight')
 
@@ -303,13 +311,13 @@ def plot_range_ctl(defects,bulks,legend=False):
 
         plt.figure(figsize=(15,10))
         if typegroup[0][7] == 'i':
-            plt.title(f'{typegroup[0][2]}$_{'i'}$ Charge Levels', size=30, pad=30)
+            plt.title(f'{typegroup[0][2]}$_{'i'}$ Charge Levels', size=40, pad=30)
         if typegroup[0][7] == 's':
-            plt.title(f'{typegroup[0][2]}$_{{{typegroup[0][8]}}}$ Charge Levels', size=30, pad=30)
+            plt.title(f'{typegroup[0][2]}$_{{{typegroup[0][8]}}}$ Charge Levels', size=40, pad=30)
         if typegroup[0][7] == 'v':
-            plt.title(f'V$_{{{typegroup[0][8]}}}$ Charge Levels', size=30, pad=30)
-        plt.xlabel('Fermi Energy (eV)', size=20, labelpad=30) 
-        plt.ylabel('Formation Energy (eV)', size=20, labelpad=30)
+            plt.title(f'V$_{{{typegroup[0][8]}}}$ Charge Levels', size=40, pad=30)
+        plt.xlabel('Fermi Energy (eV)', size=30, labelpad=30) 
+        plt.ylabel('Formation Energy (eV)', size=30, labelpad=30)
 
         #VBM and CBM 
         plt.axvline(x=0, color='tab:orange', linestyle='-', alpha=0.5)
@@ -340,14 +348,14 @@ def plot_range_ctl(defects,bulks,legend=False):
         #Other details
         plt.xlim([-1,xmax])
         plt.ylim([ymin,ymax])
-        plt.xticks(np.linspace(-1,xmax,abs(xmax)+2))
+        plt.xticks(np.linspace(-1,xmax,abs(xmax)+2),fontsize=20)
         if ymin == 0 or ymax == 0:
-            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1))
+            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1),fontsize=20)
         else:
             if ymin/abs(ymin) == ymax/abs(ymax):
-                plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)-1))
+                plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)-1),fontsize=20)
             else:
-                plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1))
+                plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1),fontsize=20)
 
         plt.grid(visible=0)#, which='major', axis='both',linestyle='--')
 
