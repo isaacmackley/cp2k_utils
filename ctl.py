@@ -96,7 +96,7 @@ def plot_ctl(defects,bulk,vbm,cbm,customx=False,xxmin=1,xxmax=4,customy=False,yy
         plt.ylabel('Formation Energy (eV)', size=30, labelpad=30)
 
         #VBM and CBM 
-        plt.axvline(x=0, color='tab:green, linestyle='-', alpha=0.5)
+        plt.axvline(x=0, color='tab:green', linestyle='-', alpha=0.5)
         plt.axvline(x=E_cbm-E_vbm, color='tab:orange', linestyle='-', alpha=0.5)
         plt.fill([-1,0,0,-1], [ymin,ymin,ymax,ymax], 'tab:green',[E_cbm-E_vbm,xmax,xmax,E_cbm-E_vbm], [ymin,ymin,ymax,ymax], 'tab:orange', alpha=0.2)
 
