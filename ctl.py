@@ -168,9 +168,9 @@ def plot_ctl(defects,bulk,vbm,cbm,customx=False,xxmin=1,xxmax=4,customy=False,yy
     ymin = round(ymin - 1)
     ymax = round(ymax + 1)
     #VBM and CBM 
-    plt.axvline(x=0, color='tab:orange', linestyle='-', alpha=0.5)
-    plt.axvline(x=E_cbm-E_vbm, color='tab:blue', linestyle='-', alpha=0.5)
-    plt.fill([-1,0,0,-1], [ymin,ymin,ymax,ymax], 'tab:orange',[E_cbm-E_vbm,xmax,xmax,E_cbm-E_vbm], [ymin,ymin,ymax,ymax], 'tab:blue', alpha=0.2)
+    plt.axvline(x=0, color='tab:green', linestyle='-', alpha=0.5)
+    plt.axvline(x=E_cbm-E_vbm, color='tab:orange', linestyle='-', alpha=0.5)
+    plt.fill([-1,0,0,-1], [ymin,ymin,ymax,ymax], 'tab:green',[E_cbm-E_vbm,xmax,xmax,E_cbm-E_vbm], [ymin,ymin,ymax,ymax], 'tab:orange', alpha=0.2)
 
     n=0
     while n < len(defect_types):
@@ -320,9 +320,9 @@ def plot_range_ctl(defects,bulks,legend=False):
         plt.ylabel('Formation Energy (eV)', size=30, labelpad=30)
 
         #VBM and CBM 
-        plt.axvline(x=0, color='tab:orange', linestyle='-', alpha=0.5)
-        plt.axvline(x=E_cbm_ave-E_vbm_ave, color='tab:blue', linestyle='-', alpha=0.5)
-        plt.fill([-1,0,0,-1], [ymin,ymin,ymax,ymax], 'tab:orange',[E_cbm_ave-E_vbm_ave,xmax,xmax,E_cbm_ave-E_vbm_ave], [ymin,ymin,ymax,ymax], 'tab:blue', alpha=0.2)
+        plt.axvline(x=0, color='tab:green', linestyle='-', alpha=0.5)
+        plt.axvline(x=E_cbm_ave-E_vbm_ave, color='tab:orange', linestyle='-', alpha=0.5)
+        plt.fill([-1,0,0,-1], [ymin,ymin,ymax,ymax], 'tab:green',[E_cbm_ave-E_vbm_ave,xmax,xmax,E_cbm_ave-E_vbm_ave], [ymin,ymin,ymax,ymax], 'tab:orange', alpha=0.2)
 
         #Defect Plots
         for defect in typegroup:
@@ -383,9 +383,9 @@ def plot_range_ctl(defects,bulks,legend=False):
         plt.ylabel('Formation Energy (eV)', size=20, labelpad=30)
 
         #VBM and CBM 
-        plt.axvline(x=0, color='tab:orange', linestyle='-', alpha=0.5)
-        plt.axvline(x=E_cbm_ave-E_vbm_ave, color='tab:blue', linestyle='-', alpha=0.5)
-        plt.fill([-1,0,0,-1], [ymin,ymin,ymax,ymax], 'tab:orange',[E_cbm_ave-E_vbm_ave,xmax,xmax,E_cbm_ave-E_vbm_ave], [ymin,ymin,ymax,ymax], 'tab:blue', alpha=0.2)
+        plt.axvline(x=0, color='tab:green', linestyle='-', alpha=0.5)
+        plt.axvline(x=E_cbm_ave-E_vbm_ave, color='tab:orange', linestyle='-', alpha=0.5)
+        plt.fill([-1,0,0,-1], [ymin,ymin,ymax,ymax], 'tab:green',[E_cbm_ave-E_vbm_ave,xmax,xmax,E_cbm_ave-E_vbm_ave], [ymin,ymin,ymax,ymax], 'tab:orange', alpha=0.2)
 
         #Defect Plots
         for defect in typegroup:
