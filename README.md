@@ -5,6 +5,7 @@ This is a package of useful analysis tools that are written to work with the out
 Notebooks showing examples of how to use functions can be found in [example_scripts](/example_scripts)
 
 ## PDOS
+<img src="[http://....jpg](https://github.com/user-attachments/assets/b8846064-8d98-492b-b174-e6b52ad99934)" width="100" />
 ![N Density of States](https://github.com/user-attachments/assets/b8846064-8d98-492b-b174-e6b52ad99934 | width=100)
 ![Total Density of States](https://github.com/user-attachments/assets/7943ff75-a1ac-4440-a306-0e7797927ac6)
 
