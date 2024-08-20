@@ -6,7 +6,7 @@ Notebooks showing examples of how to use functions can be found in [example_scri
 
 ## PDOS
 
-![N Density of States](<https://github.com/user-attachments/assets/b8846064-8d98-492b-b174-e6b52ad99934 | width=100>)
+![N Density of States](<https://github.com/user-attachments/assets/b8846064-8d98-492b-b174-e6b52ad99934> | width=100)
 ![Total Density of States](https://github.com/user-attachments/assets/7943ff75-a1ac-4440-a306-0e7797927ac6)
 
 
