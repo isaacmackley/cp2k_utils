@@ -4,6 +4,14 @@ This is a package of useful analysis tools that are written to work with the out
 
 Notebooks showing examples of how to use functions can be found in [example_scripts](/example_scripts)
 
+Functionality:
+
+- PDOS Plotting
+- CTL Plotting
+- xyz to cif converter
+- Interstitial defect site generator (WIP)
+
+
 ## PDOS
 
 
