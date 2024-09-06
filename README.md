@@ -15,7 +15,7 @@ Functionality:
 
 converts xyz to cif given input cell parameters.
 Designed for CLI:
-'xyz-to-cif input.xyz a b c alpha beta gamma output.cif'
+`xyz-to-cif input.xyz a b c alpha beta gamma output.cif`
 
 ## PDOS
 
