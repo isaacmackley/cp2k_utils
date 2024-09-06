@@ -11,6 +11,11 @@ Functionality:
 - xyz to cif converter
 - Interstitial defect site generator (WIP)
 
+## XYZ to CIF
+
+converts xyz to cif given input cell parameters.
+Designed for CLI:
+'xyz-to-cif input.xyz a b c alpha beta gamma output.cif'
 
 ## PDOS
 
