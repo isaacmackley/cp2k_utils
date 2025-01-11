@@ -137,6 +137,8 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
             for file in os.listdir('.'):
                 if fnmatch.fnmatch(file, '*-k'+str(k)+'*'+'.pdos'):
                     alpha=file
+                elif fnmatch.fnmatch(file, '*k'+str(k)+'*'+'.pdos'):
+                    alpha=file
 
             element_no=f"element{k}"
             
