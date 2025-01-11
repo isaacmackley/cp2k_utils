@@ -118,19 +118,29 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
     names={}
     plots={}
 
+    if spin==True:
+        for element in elements:
+            k=k+1
+            for file in os.listdir('.'):
+                if fnmatch.fnmatch(file, '*ALPHA_k'+str(k)+'*'):
+                    alpha=file
+            for file in os.listdir('.'):
+                if fnmatch.fnmatch(file, '*BETA_k'+str(k)+'*'):
+                    beta=file
 
-    for element in elements:
-        k=k+1
-        for file in os.listdir('.'):
-            if fnmatch.fnmatch(file, '*ALPHA_k'+str(k)+'*'):
-                alpha=file
-        for file in os.listdir('.'):
-            if fnmatch.fnmatch(file, '*BETA_k'+str(k)+'*'):
-                beta=file
+            element_no=f"element{k}"
+            
+            names[element_no] = smeared_pdos([alpha,beta],sigma)
+    elif spin==False:
+        for element in elements:
+            k=k+1
+            for file in os.listdir('.'):
+                if fnmatch.fnmatch(file, '*-k'+str(k)+'*'+'.pdos'):
+                    alpha=file
 
-        element_no=f"element{k}"
-        
-        names[element_no] = smeared_pdos([alpha,beta],sigma)
+            element_no=f"element{k}"
+            
+            names[element_no] = smeared_pdos([alpha],sigma)
 
 
     n=1
@@ -153,7 +163,10 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
 
         i=1
 
-        orbs = (len(names[f'element{n}'][0])-1)/2
+        if spin==True:
+            orbs = (len(names[f'element{n}'][0])-1)/2
+        elif spin==False:
+            orbs = (len(names[f'element{n}'][0])-1)
 
         while i < len(names[f'element{n}']):
 
@@ -162,36 +175,40 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
             s.append(names[f'element{n}'][i][1])
 
             if orbs == 1:
-                s_2.append(names[f'element{n}'][i][2]*-1)
                 y = [s]
-                y_2 = [s_2]
+                if spin==True:
+                    s_2.append(names[f'element{n}'][i][2]*-1)
+                    y_2 = [s_2]
 
             if orbs == 2:
                 p.append(names[f'element{n}'][i][2])
-                s_2.append(names[f'element{n}'][i][3]*-1)
-                p_2.append(names[f'element{n}'][i][4]*-1)
                 y = [s, p]
-                y_2 = [s_2, p_2]
+                if spin==True:
+                    s_2.append(names[f'element{n}'][i][3]*-1)
+                    p_2.append(names[f'element{n}'][i][4]*-1)
+                    y_2 = [s_2, p_2]
 
             if orbs == 3:
                 p.append(names[f'element{n}'][i][2])
                 d.append(names[f'element{n}'][i][3])
-                s_2.append(names[f'element{n}'][i][4]*-1)
-                p_2.append(names[f'element{n}'][i][5]*-1)
-                d_2.append(names[f'element{n}'][i][6]*-1)
                 y = [s, p, d]
-                y_2 = [s_2, p_2, d_2]
+                if spin==True:
+                    s_2.append(names[f'element{n}'][i][4]*-1)
+                    p_2.append(names[f'element{n}'][i][5]*-1)
+                    d_2.append(names[f'element{n}'][i][6]*-1)
+                    y_2 = [s_2, p_2, d_2]
 
             if orbs == 4:
                 p.append(names[f'element{n}'][i][2])
                 d.append(names[f'element{n}'][i][3])
                 f.append(names[f'element{n}'][i][4])
-                s_2.append(names[f'element{n}'][i][5]*-1)
-                p_2.append(names[f'element{n}'][i][6]*-1)
-                d_2.append(names[f'element{n}'][i][7]*-1)
-                f_2.append(names[f'element{n}'][i][8]*-1)
                 y = [s, p, d, f]
-                y_2 = [s_2, p_2, d_2, f_2]
+                if spin==True:
+                    s_2.append(names[f'element{n}'][i][5]*-1)
+                    p_2.append(names[f'element{n}'][i][6]*-1)
+                    d_2.append(names[f'element{n}'][i][7]*-1)
+                    f_2.append(names[f'element{n}'][i][8]*-1)
+                    y_2 = [s_2, p_2, d_2, f_2]
                         
 
             i=i+1
@@ -199,7 +216,8 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
         element_name = f'{elements[n-1]}'
         plots[f'{element_name}_x'] = x
         plots[f'{element_name}_alpha_tot'] = sum(map(np.array, y))
-        plots[f'{element_name}_beta_tot']  = sum(map(np.array, y_2))
+        if spin==True:
+            plots[f'{element_name}_beta_tot']  = sum(map(np.array, y_2))
 
 
         plt.figure(figsize=(figw,figh))#.set_facecolor('#BCC2C3')
@@ -215,21 +233,34 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
         
 
         plt.plot(x, s, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid', label=f'{elements[n-1]}_s')
-        plt.plot(x, s_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid')
+        if spin==True:
+            plt.plot(x, s_2, marker = '',c=ELEMENT_COLOURS[elements[n-1]],linestyle='solid')
         
-        ymax = max(max([y for x, y in zip(x, s) if xmin <= x <= xmax]), max([y for x, y in zip(x, s_2) if xmin <= x <= xmax], key=abs))
+        if spin==True:
+            ymax = max(max([y for x, y in zip(x, s) if xmin <= x <= xmax]), max([y for x, y in zip(x, s_2) if xmin <= x <= xmax], key=abs))
+        elif spin==False:
+            ymax = max([y for x, y in zip(x, s) if xmin <= x <= xmax])
         if orbs >= 2:
             plt.plot(x, p, marker = '', label=f'{elements[n-1]}_p',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=0.5),linestyle='solid')
-            plt.plot(x, p_2, marker = '',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=0.5),linestyle='solid')
-            ymax = max(ymax, max([y for x, y in zip(x, p) if xmin <= x <= xmax]), max([y for x, y in zip(x, p_2) if xmin <= x <= xmax], key=abs))
+            if spin==True:
+                plt.plot(x, p_2, marker = '',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=0.5),linestyle='solid')
+                ymax = max(ymax, max([y for x, y in zip(x, p) if xmin <= x <= xmax]), max([y for x, y in zip(x, p_2) if xmin <= x <= xmax], key=abs))
+            elif spin==False:
+                ymax = max([y for x, y in zip(x, s) if xmin <= x <= xmax])
             if orbs >= 3:
                 plt.plot(x, d, marker = '', label=f'{elements[n-1]}_d',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.2),linestyle='solid')
-                plt.plot(x, d_2, marker = '',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.2),linestyle='solid')
-                ymax = max(ymax, max([y for x, y in zip(x, d) if xmin <= x <= xmax]), max([y for x, y in zip(x, d_2) if xmin <= x <= xmax], key=abs))
+                if spin==True:
+                    plt.plot(x, d_2, marker = '',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.2),linestyle='solid')
+                    ymax = max(ymax, max([y for x, y in zip(x, d) if xmin <= x <= xmax]), max([y for x, y in zip(x, d_2) if xmin <= x <= xmax], key=abs))
+                elif spin==False:
+                    ymax = max([y for x, y in zip(x, s) if xmin <= x <= xmax])
                 if orbs >= 4:
                     plt.plot(x, f, marker = '', label=f'{elements[n-1]}_f',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.5),linestyle='solid')
-                    plt.plot(x, f_2, marker = '',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.5),linestyle='solid')
-                    ymax = max(ymax, max([y for x, y in zip(x, f) if xmin <= x <= xmax]), max([y for x, y in zip(x, f_2) if xmin <= x <= xmax], key=abs))
+                    if spin==True:
+                        plt.plot(x, f_2, marker = '',c=lighten_hex_colour(ELEMENT_COLOURS[elements[n-1]],factor=-0.5),linestyle='solid')
+                        ymax = max(ymax, max([y for x, y in zip(x, f) if xmin <= x <= xmax]), max([y for x, y in zip(x, f_2) if xmin <= x <= xmax], key=abs))
+                    elif spin==False:
+                        ymax = max([y for x, y in zip(x, s) if xmin <= x <= xmax])
 
         if grid==True:
             plt.grid(visible=1)
@@ -261,8 +292,10 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
             plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax))+1))
         
         plt.xlim([xmin,xmax])
-        plt.ylim([-ymax,ymax])
-
+        if spin==True:
+            plt.ylim([-ymax,ymax])
+        elif spin==False:
+            plt.ylim([0,ymax])
 
         plt.legend(markerscale=10.0, fontsize=20)
 
@@ -278,8 +311,10 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
     plt.xlabel('Energy (eV)', size=30) 
     plt.ylabel('Denisty of States (arb.)', size=30)
 
-    ymax = max(max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_beta_tot']) if xmin <= x <= xmax], key=abs))
-    
+    if spin==True:
+        ymax = max(max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_beta_tot']) if xmin <= x <= xmax], key=abs))
+    elif spin==False:
+        ymax = max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_alpha_tot']) if xmin <= x <= xmax])
     plt.axvline(x=vbm, color='k', linestyle='--', alpha=0.5)
 
     plt.axvline(x=0, color='k', linestyle='--', alpha=0.5)
@@ -287,9 +322,13 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
 
     j=1
     while j <= len(elements):
-        ymax = max(ymax,max([y for x, y in zip(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot']) if xmin <= x <= xmax], key=abs))
+        if spin==True:
+            ymax = max(ymax,max([y for x, y in zip(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot']) if xmin <= x <= xmax], key=abs))
+        if spin==False:
+            ymax = max(ymax,max([y for x, y in zip(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot']) if xmin <= x <= xmax]), key=abs)
         plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_alpha_tot'], marker = '',lw=2,c=ELEMENT_COLOURS[elements[j-1]], label=f'{elements[j-1]}')
-        plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot'],lw=2,c=ELEMENT_COLOURS[elements[j-1]], marker = '')
+        if spin==True:
+            plt.plot(plots[f'{elements[j-1]}_x'], plots[f'{elements[j-1]}_beta_tot'],lw=2,c=ELEMENT_COLOURS[elements[j-1]], marker = '')
         j=j+1
 
     if grid==True:
@@ -314,7 +353,10 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
             plt.xticks(np.linspace(xmin,xmax,int((abs(xmin)+xmax))+1),fontsize=20)
 
     plt.xlim([xmin,xmax])
-    plt.ylim([-ymax,ymax])
+    if spin==True:
+        plt.ylim([-ymax,ymax])
+    if spin==False:
+        plt.ylim([0,ymax])
 
     plt.legend(markerscale=10.0, fontsize=20)
 
