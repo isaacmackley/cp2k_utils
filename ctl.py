@@ -433,33 +433,34 @@ def plot_range_ctl(defects,bulks,legend=False):
 
 
 
-def plot_multi_ctl(defects,materials,fermi_line=None):
+def plot_multi_mat_ctl(defects,materials,fermi_line=None):
     """
     Plots all given CTLs in given materials with band alignment.
 
     nb
         Ensure that the VBM and CBM energies are given relative to one another between different materials.
         Ensure that the 'Material Name' is the same in the defects and materials lists.
+        CTL level energies to be given relative to the VBM of the material.
 
     args:
 
     defects:
-            Each row: [Unique Defect Key, Defect Name, Material Name, List of CTL tuples [Name, Energy] ]
+            Each row: [Defect Name, Material Name, List of CTL tuples [Name, Energy] ]
             e.g.
                 species = [
-                    ['Hf_Nint', f'N$_{'i'}$', f'HfO$_2$', [
+                    [f'N$_{'i'}$', f'HfO$_2$', [
                         ['+1/0', 1.3469378771661913],
                         ['0/-1', 2.8837208880316783],
                         ['-1/-2', 2.369073993248366],
                         ['-2/-3', 2.6696762876888496],
                     ]],
-                    ['Hf_Nsub', f'N$_{'O'}$', f'HfO$_2$', [
+                    [f'N$_{'O'}$', f'HfO$_2$', [
                         ['3+/2+', 1.7950036300732979],
                         ['2+/1+', 3.0614261580351125],
                         ['+1/0', 2.0040361516655647],
                         ['0/-1', 2.164946988290245],
                     ]],
-                    ['Hf_N2int', f'N$_{'2'}$$_{'i'}$', f'HfO$_2$', [
+                    [f'N$_{'2'}$$_{'i'}$', f'HfO$_2$', [
                         ['0/-1', 3.380293837285865],
                         ['-1/-2', 4.198164515355801],
                         ['-2/-3', 4.441756959205842],
@@ -474,14 +475,14 @@ def plot_multi_ctl(defects,materials,fermi_line=None):
                         [f'HfO$_{'2'}$', HfO2vbm, HfO2cbm]
                     ]
     fermi_line:
-                Draws dashed line at desited fermi level
+                Draws dashed line at desired fermi level
     """
 
     defects_list = []
     materials_list = []
 
     for row in defects:
-        defects_list.append(row[:3])
+        defects_list.append(row[:2])
     for i in range(len(materials)):
         materials_list.append(materials[i][0])
 
@@ -497,12 +498,12 @@ def plot_multi_ctl(defects,materials,fermi_line=None):
 
     n=0
     for i in range(len(materials)):
-        no_of_defects = sum(1 for row in defects if row[2] == materials[i][0])
+        no_of_defects = sum(1 for row in defects if row[1] == materials[i][0])
         defects_list.insert(n+no_of_defects,['','',''])
         n=n+no_of_defects+1
     defects_list.insert(0,['','',''])
 
-    plt.xticks(np.linspace(0,xmax,xmax+1), [row[1] for row in defects_list], fontsize=20)
+    plt.xticks(np.linspace(0,xmax,xmax+1), [row[0] for row in defects_list], fontsize=20)
     plt.yticks(fontsize=20)
 
     plt.ylabel('Fermi Energy (eV)', size=30, labelpad=30) 
@@ -510,7 +511,7 @@ def plot_multi_ctl(defects,materials,fermi_line=None):
     n=0
     for i in range(len(materials)):
 
-        no_of_defects = sum(1 for row in defects if row[2] == materials[i][0])
+        no_of_defects = sum(1 for row in defects if row[1] == materials[i][0])
         xmin_i = n
         xmax_i = n+no_of_defects+1
         vbm_i = materials[i][1]
@@ -561,11 +562,11 @@ def plot_multi_ctl(defects,materials,fermi_line=None):
     n=1
     for i in range(len(materials)):
         for row in defects:
-            if row[2] == materials[i][0]:
+            if row[1] == materials[i][0]:
 
                 used_y = []
-                for j in range(len(row[3])):
-                    y_value = row[3][j][1]
+                for j in range(len(row[2])):
+                    y_value = materials[i][1]+row[2][j][1]
                     offset = 0
                     for used in used_y:
                         if abs(y_value-used) < 0.1:
@@ -573,7 +574,7 @@ def plot_multi_ctl(defects,materials,fermi_line=None):
                     
                     plt.hlines(y_value, n-0.1, n+0.1, lw=3)
                     plt.annotate(
-                        f'{row[3][j][0]}',
+                        f'{row[2][j][0]}',
                         [n,y_value+offset],
                         va='center',
                         xytext=(30,0),
