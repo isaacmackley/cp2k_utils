@@ -585,5 +585,5 @@ def plot_multi_mat_ctl(defects,materials,fermi_line=None):
                 n=n+1
         n=n+1
             
-
+    plt.savefig('Multi_Mat_CTLs.png')
     plt.show()
