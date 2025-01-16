@@ -46,6 +46,15 @@ Usage: `plot_ctl()` [doc](/example_scripts/plot_ctl.ipynb)
 <img src="https://github.com/user-attachments/assets/9cfc6151-6cd0-4cc6-b44b-c233f94d9623" width="500">
 
 
+### Band Alignment Multiple Materials CTLs
+
+Automated plotting of CTLs of multiple defect types across multiple materials.
+
+Usage: `plot_multi_mat_ctl()`
+
+<img src="https://github.com/user-attachments/assets/68b13add-87d2-44b8-9ee9-36a1d3d30c74" width="500">
+
+
 ### Range CTLs
 
 
