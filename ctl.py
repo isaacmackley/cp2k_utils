@@ -562,9 +562,25 @@ def plot_multi_ctl(defects,materials,fermi_line=None):
     for i in range(len(materials)):
         for row in defects:
             if row[2] == materials[i][0]:
+
+                used_y = []
                 for j in range(len(row[3])):
-                    plt.hlines(row[3][j][1],n-0.1,n+0.1,lw=3)
-                    plt.annotate(f'{row[3][j][0]}',[n,row[3][j][1]],va='center',xytext=(30,0),textcoords='offset points',fontsize=20)
+                    y_value = row[3][j][1]
+                    offset = 0
+                    for used in used_y:
+                        if abs(y_value-used) < 0.1:
+                            offset += 0.1
+                    
+                    plt.hlines(y_value, n-0.1, n+0.1, lw=3)
+                    plt.annotate(
+                        f'{row[3][j][0]}',
+                        [n,y_value+offset],
+                        va='center',
+                        xytext=(30,0),
+                        textcoords='offset points',
+                        fontsize=20
+                    )
+                    used_y.append(y_value+offset)
                 n=n+1
         n=n+1
             
