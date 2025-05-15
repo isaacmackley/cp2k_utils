@@ -51,7 +51,7 @@ class ElementPDOS:
 
         with open(self.alpha_file, 'r') as alpha:
             data = np.loadtxt(alpha)
-            header = alpha.readline().rstrip()
+            header = alpha.readline().rstrip().split()[1:]
 
         f = 1 / (self.sigma * np.sqrt(2*np.pi))
 

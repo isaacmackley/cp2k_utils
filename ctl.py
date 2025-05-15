@@ -641,6 +641,8 @@ def plot_multi_mat_ctl_errors(defects,materials,fermi_line=None):
                 Draws dashed line at desired fermi level
     """
 
+    color_list = ["tab:orange", "tab:pink", "tab:blue", "tab:brown", "tab:red", "tab:green"]
+
     defects_list = []
     materials_list = []
 
@@ -728,25 +730,41 @@ def plot_multi_mat_ctl_errors(defects,materials,fermi_line=None):
             if row[1] == materials[i][0]:
 
                 used_y = []
+
                 for j in range(len(row[2])):
+                    min_y = materials[i][1]+row[2][j][2]
+                    max_y = materials[i][1]+row[2][j][3]
+                    plt.fill(
+                        [n-0.1,n+0.1,n+0.1,n-0.1],
+                        [min_y,min_y, max_y,max_y],
+                        color_list[j],
+                        alpha=0.2
+                    )
+
+                for j in range(len(row[2])):
+                    min_y = materials[i][1]+row[2][j][2]
+                    max_y = materials[i][1]+row[2][j][3]
                     y_value = materials[i][1]+row[2][j][1]
                     offset = 0
                     for used in used_y:
                         if abs(y_value-used) < 0.1:
                             offset += 0.1
                     
-                    plt.hlines(y_value, n-0.1, n+0.1, lw=3)
+                    plt.hlines(min_y, n-0.2, n+0.2, lw=2, colors=color_list[j], alpha=0.8)
+                    plt.hlines(max_y, n-0.2, n+0.2, lw=2, colors=color_list[j], alpha=0.8)
+                    plt.hlines(y_value, n-0.15, n+0.15, lw=3, colors=color_list[j])
                     plt.annotate(
                         f'{row[2][j][0]}',
                         [n,y_value+offset],
                         va='center',
                         xytext=(30,0),
                         textcoords='offset points',
-                        fontsize=20
+                        fontsize=20,
+                        color=color_list[j]
                     )
                     used_y.append(y_value+offset)
                 n=n+1
         n=n+1
             
-    plt.savefig('Multi_Mat_CTLs.png')
+    plt.savefig('Multi_Mat_CTLs_error.png')
     plt.show()
