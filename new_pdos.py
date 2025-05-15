@@ -47,11 +47,36 @@ class ElementPDOS:
     
     def smear_data(self):
 
+        self.find_files()
+
+        with open(self.alpha_file, 'r') as alpha:
+            data = np.loadtxt(alpha)
+            header = alpha.readline().rstrip()
 
         f = 1 / (self.sigma * np.sqrt(2*np.pi))
 
-        f * np.exp( - ()**2 / (2 * self.sigma**2) )
+        f * np.exp( - (E - E_i)**2 / (2 * self.sigma**2) )
     
+
+
+
+for pdosfilename in pdosfilenames:
+        with open(pdosfilename, 'r') as fhandle:
+            match = HEADER_MATCH.match(fhandle.readline().rstrip())
+            if not match:
+                raise ValueError(f"The file '{pdosfilename}' does not look like a CP2K PDOS output.")
+            fermi = float(match.group('Efermi'))
+            header = fhandle.readline().rstrip().split()[1:]
+            header[1:3] = [' '.join(header[1:3])]
+            data = np.loadtxt(fhandle)
+        alldata.append(data)
+        orb_headers += header[DENSITY_COLUMN:]
+        efermi = max(efermi, fermi)
+
+
+
+
+
     def extract_orbitals(self):
         x_vals = []
         alpha_orbitals = []
