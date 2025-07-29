@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 colors = plt.cm.tab10.colors
 
@@ -517,23 +518,23 @@ def plot_multi_mat_ctl(defects,materials,fermi_line=None):
         vbm_i = materials[i][1]
         cbm_i = materials[i][2]
 
-        plt.hlines(
-            y=vbm_i,
-            xmin=xmin_i,
-            xmax=xmax_i,
-            color='tab:green',
-            linestyle='-',
-            alpha=0.5
-        )
+        # plt.hlines(
+        #     y=vbm_i,
+        #     xmin=xmin_i,
+        #     xmax=xmax_i,
+        #     color='tab:green',
+        #     linestyle='-',
+        #     alpha=0.5
+        # )
         
-        plt.hlines(
-            y=cbm_i,
-            xmin=xmin_i,
-            xmax=xmax_i,
-            color='tab:orange',
-            linestyle='-',
-            alpha=0.5
-        )
+        # plt.hlines(
+        #     y=cbm_i,
+        #     xmin=xmin_i,
+        #     xmax=xmax_i,
+        #     color='tab:orange',
+        #     linestyle='-',
+        #     alpha=0.5
+        # )
 
         plt.fill(
             [xmin_i,xmin_i,xmax_i,xmax_i],
@@ -641,7 +642,17 @@ def plot_multi_mat_ctl_errors(defects,materials,fermi_line=None):
                 Draws dashed line at desired fermi level
     """
 
-    color_list = ["tab:orange", "tab:pink", "tab:blue", "tab:brown", "tab:red", "tab:green"]
+    #color_list = ["tab:orange", "tab:pink", "tab:blue", "tab:brown", "tab:red", "tab:green"]
+
+    color_list = {
+        '3+/2+': 'tab:red',
+        '2+/1+': 'tab:olive',
+        '1+/0': 'tab:cyan',
+        '0/1-': 'tab:blue',
+        '1-/2-': 'tab:pink',
+        '2-/3-': 'tab:purple',
+        '3-/4-': 'tab:brown'
+    }
 
     defects_list = []
     materials_list = []
@@ -656,7 +667,8 @@ def plot_multi_mat_ctl_errors(defects,materials,fermi_line=None):
 
     xmax = len(defects)+len(materials)
 
-    plt.figure(figsize=(20,20))
+    plt.figure(figsize=(30,20))
+    plt.title('Charge Transition Levels', size=60, pad=60)
 
     plt.ylim(ymin,ymax)
     plt.xlim(0,xmax)
@@ -668,10 +680,11 @@ def plot_multi_mat_ctl_errors(defects,materials,fermi_line=None):
         n=n+no_of_defects+1
     defects_list.insert(0,['','',''])
 
-    plt.xticks(np.linspace(0,xmax,xmax+1), [row[0] for row in defects_list], fontsize=20)
-    plt.yticks(fontsize=20)
+    plt.xticks(np.linspace(0,xmax,xmax+1), [row[0] for row in defects_list], fontsize=30)
+    plt.yticks(fontsize=30)
 
-    plt.ylabel('Fermi Energy (eV)', size=30, labelpad=30) 
+    plt.ylabel('Fermi Energy (eV)', size=40, labelpad=20)
+    plt.xlabel('Defects', size=40, labelpad=30) 
 
     n=0
     for i in range(len(materials)):
@@ -682,23 +695,23 @@ def plot_multi_mat_ctl_errors(defects,materials,fermi_line=None):
         vbm_i = materials[i][1]
         cbm_i = materials[i][2]
 
-        plt.hlines(
-            y=vbm_i,
-            xmin=xmin_i,
-            xmax=xmax_i,
-            color='tab:green',
-            linestyle='-',
-            alpha=0.5
-        )
+        # plt.hlines(
+        #     y=vbm_i,
+        #     xmin=xmin_i,
+        #     xmax=xmax_i,
+        #     color='tab:green',
+        #     linestyle='-',
+        #     alpha=0.5
+        # )
         
-        plt.hlines(
-            y=cbm_i,
-            xmin=xmin_i,
-            xmax=xmax_i,
-            color='tab:orange',
-            linestyle='-',
-            alpha=0.5
-        )
+        # plt.hlines(
+        #     y=cbm_i,
+        #     xmin=xmin_i,
+        #     xmax=xmax_i,
+        #     color='tab:orange',
+        #     linestyle='-',
+        #     alpha=0.5
+        # )
 
         plt.fill(
             [xmin_i,xmin_i,xmax_i,xmax_i],
@@ -715,7 +728,7 @@ def plot_multi_mat_ctl_errors(defects,materials,fermi_line=None):
         plt.annotate(
             materials[i][0],
             [x_i,ymin+0.5],
-            fontsize=20,
+            fontsize=30,
             ha='center'
         )
         
@@ -732,16 +745,22 @@ def plot_multi_mat_ctl_errors(defects,materials,fermi_line=None):
                 used_y = []
 
                 for j in range(len(row[2])):
+                    w = 0.4/(len(row[2])-1)
+                    m = n + w * (j - (len(row[2]) - 1) / 2)
+
                     min_y = materials[i][1]+row[2][j][2]
                     max_y = materials[i][1]+row[2][j][3]
                     plt.fill(
-                        [n-0.1,n+0.1,n+0.1,n-0.1],
+                        [m-0.05,m+0.05,m+0.05,m-0.05],
                         [min_y,min_y, max_y,max_y],
-                        color_list[j],
+                        color_list.get(f'{row[2][j][0]}'),
                         alpha=0.2
                     )
 
                 for j in range(len(row[2])):
+                    w = 0.4/(len(row[2])-1)
+                    m = n + w * (j - (len(row[2]) - 1) / 2)
+
                     min_y = materials[i][1]+row[2][j][2]
                     max_y = materials[i][1]+row[2][j][3]
                     y_value = materials[i][1]+row[2][j][1]
@@ -750,21 +769,239 @@ def plot_multi_mat_ctl_errors(defects,materials,fermi_line=None):
                         if abs(y_value-used) < 0.1:
                             offset += 0.1
                     
-                    plt.hlines(min_y, n-0.2, n+0.2, lw=2, colors=color_list[j], alpha=0.8)
-                    plt.hlines(max_y, n-0.2, n+0.2, lw=2, colors=color_list[j], alpha=0.8)
-                    plt.hlines(y_value, n-0.15, n+0.15, lw=3, colors=color_list[j])
-                    plt.annotate(
-                        f'{row[2][j][0]}',
-                        [n,y_value+offset],
-                        va='center',
-                        xytext=(30,0),
-                        textcoords='offset points',
-                        fontsize=20,
-                        color=color_list[j]
-                    )
+                    o = n-0.4 if m<n else n+0.4 if m>n else n+0.4
+                    plt.hlines(min_y, m-0.075, m+0.075, lw=3, colors=color_list.get(f'{row[2][j][0]}'))
+                    plt.hlines(max_y, m-0.075, m+0.075, lw=3, colors=color_list.get(f'{row[2][j][0]}'))
+                    plt.hlines(y_value, m-0.05, m+0.05, lw=3, colors=color_list.get(f'{row[2][j][0]}'))
+                    # plt.annotate(
+                    #     f'{row[2][j][0]}',
+                    #     [o,y_value+offset],
+                    #     va='center',
+                    #     ha='center',
+                    #     xytext=(0,0),
+                    #     textcoords='offset points',
+                    #     fontsize=20,
+                    #     color=color_list.get(f'{row[2][j][0]}')
+                    # )
                     used_y.append(y_value+offset)
                 n=n+1
         n=n+1
-            
-    plt.savefig('Multi_Mat_CTLs_error.png')
+    
+    custom_leg = [[],[]]
+
+    for key in color_list:
+        custom_leg[0].append(key)
+        custom_leg[1].append(Line2D([0], [0], color=color_list[key], lw=6))
+    
+    
+    plt.legend(custom_leg[1], custom_leg[0], loc='center right', fontsize=30)
+
+    plt.savefig('Multi_Mat_CTLs_error.png', bbox_inches='tight')
+    plt.show()
+
+
+
+
+
+
+def temp_plot_multi_mat_ctl_errors(defects,materials,fermis):
+    """
+    Plots all given CTLs in given materials with band alignment.
+
+    nb
+        Ensure that the VBM and CBM energies are given relative to one another between different materials.
+        Ensure that the 'Material Name' is the same in the defects and materials lists.
+        CTL level energies to be given relative to the VBM of the material.
+
+    args:
+
+    defects:
+            Each row: [Defect Name, Material Name, List of CTL tuplesenergies [Name, Ave_E, Min_E, Max_E] ]
+            e.g.
+                species = [
+                    [f'N$_{'i'}$', f'HfO$_2$', [
+                        ['+1/0', 1.3469378771661913],
+                        ['0/-1', 2.8837208880316783],
+                        ['-1/-2', 2.369073993248366],
+                        ['-2/-3', 2.6696762876888496],
+                    ]],
+                    [f'N$_{'O'}$', f'HfO$_2$', [
+                        ['3+/2+', 1.7950036300732979],
+                        ['2+/1+', 3.0614261580351125],
+                        ['+1/0', 2.0040361516655647],
+                        ['0/-1', 2.164946988290245],
+                    ]],
+                    [f'N$_{'2'}$$_{'i'}$', f'HfO$_2$', [
+                        ['0/-1', 3.380293837285865],
+                        ['-1/-2', 4.198164515355801],
+                        ['-2/-3', 4.441756959205842],
+                        ['-3/-4', 3.7187798290658316]
+                    ]]
+                ]
+    materials:
+                Each row: [Material Name, VBM, CBM]
+                e.g.
+                    materials = [
+                        ['Si', Sivbm, Sicbm],
+                        [f'HfO$_{'2'}$', HfO2vbm, HfO2cbm]
+                    ]
+    fermi_line:
+                Draws dashed line at desired fermi level
+    """
+
+    #color_list = ["tab:orange", "tab:pink", "tab:blue", "tab:brown", "tab:red", "tab:green"]
+
+    color_list = {
+        #'3+/2+': 'tab:red',
+        '2+/1+': 'tab:olive',
+        '1+/0': 'tab:cyan',
+        '0/1-': 'tab:blue',
+        '1-/2-': 'tab:pink',
+        #'2-/3-': 'tab:purple',
+        #'3-/4-': 'tab:brown'
+    }
+
+    defects_list = []
+    materials_list = []
+
+    for row in defects:
+        defects_list.append(row[:2])
+    for i in range(len(materials)):
+        materials_list.append(materials[i][0])
+
+    ymin = round(min(materials, key=lambda x: x[1])[1]-1)
+    ymax = round(max(materials, key=lambda x: x[2])[2]+1)
+
+    xmax = len(defects)+len(materials)
+
+    plt.figure(figsize=(20,20))
+    #plt.title('Charge Transition Levels', size=60, pad=60)
+
+    plt.ylim(ymin,ymax)
+    plt.xlim(0,xmax)
+
+    n=0
+    for i in range(len(materials)):
+        no_of_defects = sum(1 for row in defects if row[1] == materials[i][0])
+        defects_list.insert(n+no_of_defects,['','',''])
+        n=n+no_of_defects+1
+    defects_list.insert(0,['','',''])
+
+    plt.xticks(np.linspace(0,xmax,xmax+1), [row[0] for row in defects_list], fontsize=30)
+    plt.yticks(fontsize=30)
+
+    plt.ylabel('Fermi Energy (eV)', size=40, labelpad=20)
+    #plt.xlabel('Defects', size=40, labelpad=30) 
+
+    n=0
+    for i in range(len(materials)):
+
+        no_of_defects = sum(1 for row in defects if row[1] == materials[i][0])
+        xmin_i = n
+        xmax_i = n+no_of_defects+1
+        vbm_i = materials[i][1]
+        cbm_i = materials[i][2]
+
+        # plt.hlines(
+        #     y=vbm_i,
+        #     xmin=xmin_i,
+        #     xmax=xmax_i,
+        #     color='tab:green',
+        #     linestyle='-',
+        #     alpha=0.5
+        # )
+        
+        # plt.hlines(
+        #     y=cbm_i,
+        #     xmin=xmin_i,
+        #     xmax=xmax_i,
+        #     color='tab:orange',
+        #     linestyle='-',
+        #     alpha=0.5
+        # )
+
+        plt.fill(
+            [xmin_i,xmin_i,xmax_i,xmax_i],
+            [ymin,vbm_i,vbm_i,ymin],
+            'tab:green',
+            [xmin_i,xmin_i,xmax_i,xmax_i],
+            [cbm_i,ymax,ymax,cbm_i],
+            'tab:orange',
+            alpha=0.2
+        )
+
+        x_i = n + (no_of_defects+1)/2
+
+        plt.annotate(
+            materials[i][0],
+            [x_i,ymin+0.5],
+            fontsize=30,
+            ha='center'
+        )
+        
+        n=n+no_of_defects+1
+    
+    for n in range(len(fermis)):
+        plt.axhline(y=fermis[n][1], label=fermis[n][0], linestyle='--', lw=3, alpha=0.8)
+
+    n=1
+    for i in range(len(materials)):
+        for row in defects:
+            if row[1] == materials[i][0]:
+
+                used_y = []
+
+                for j in range(len(row[2])):
+                    w = 0.4/(len(row[2])-1)
+                    m = n + w * (j - (len(row[2]) - 1) / 2)
+
+                    min_y = materials[i][1]+row[2][j][2]
+                    max_y = materials[i][1]+row[2][j][3]
+                    plt.fill(
+                        [m-0.05,m+0.05,m+0.05,m-0.05],
+                        [min_y,min_y, max_y,max_y],
+                        color_list.get(f'{row[2][j][0]}'),
+                        alpha=0.2
+                    )
+
+                for j in range(len(row[2])):
+                    w = 0.4/(len(row[2])-1)
+                    m = n + w * (j - (len(row[2]) - 1) / 2)
+
+                    min_y = materials[i][1]+row[2][j][2]
+                    max_y = materials[i][1]+row[2][j][3]
+                    y_value = materials[i][1]+row[2][j][1]
+                    offset = 0
+                    for used in used_y:
+                        if abs(y_value-used) < 0.1:
+                            offset += 0.1
+                    
+                    o = n-0.4 if m<n else n+0.4 if m>n else n+0.4
+                    plt.hlines(min_y, m-0.075, m+0.075, lw=3, colors=color_list.get(f'{row[2][j][0]}'))
+                    plt.hlines(max_y, m-0.075, m+0.075, lw=3, colors=color_list.get(f'{row[2][j][0]}'))
+                    plt.hlines(y_value, m-0.05, m+0.05, lw=3, colors=color_list.get(f'{row[2][j][0]}'))
+                    # plt.annotate(
+                    #     f'{row[2][j][0]}',
+                    #     [o,y_value+offset],
+                    #     va='center',
+                    #     ha='center',
+                    #     xytext=(0,0),
+                    #     textcoords='offset points',
+                    #     fontsize=20,
+                    #     color=color_list.get(f'{row[2][j][0]}')
+                    # )
+                    used_y.append(y_value+offset)
+                n=n+1
+        n=n+1
+    
+    # custom_leg = [[],[]]
+
+    # for key in color_list:
+    #     custom_leg[0].append(key)
+    #     custom_leg[1].append(Line2D([0], [0], color=color_list[key], lw=6))
+    
+    
+    #plt.legend(custom_leg[1], custom_leg[0], loc='center right', fontsize=30)
+    #plt.legend(fontsize=20)
+    plt.savefig('Mats_fermis.png', bbox_inches='tight')
     plt.show()

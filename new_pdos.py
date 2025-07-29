@@ -60,18 +60,18 @@ class ElementPDOS:
 
 
 
-for pdosfilename in pdosfilenames:
-        with open(pdosfilename, 'r') as fhandle:
-            match = HEADER_MATCH.match(fhandle.readline().rstrip())
-            if not match:
-                raise ValueError(f"The file '{pdosfilename}' does not look like a CP2K PDOS output.")
-            fermi = float(match.group('Efermi'))
-            header = fhandle.readline().rstrip().split()[1:]
-            header[1:3] = [' '.join(header[1:3])]
-            data = np.loadtxt(fhandle)
-        alldata.append(data)
-        orb_headers += header[DENSITY_COLUMN:]
-        efermi = max(efermi, fermi)
+    # for pdosfilename in pdosfilenames:
+    #     with open(pdosfilename, 'r') as fhandle:
+    #         match = HEADER_MATCH.match(fhandle.readline().rstrip())
+    #         if not match:
+    #             raise ValueError(f"The file '{pdosfilename}' does not look like a CP2K PDOS output.")
+    #         fermi = float(match.group('Efermi'))
+    #         header = fhandle.readline().rstrip().split()[1:]
+    #         header[1:3] = [' '.join(header[1:3])]
+    #         data = np.loadtxt(fhandle)
+    #     alldata.append(data)
+    #     orb_headers += header[DENSITY_COLUMN:]
+    #     efermi = max(efermi, fermi)
 
 
 
