@@ -1,196 +1,167 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from dataclasses import dataclass
 
 colors = plt.cm.tab10.colors
+Ha_to_eV = 27.211386
 
-def plot_ctl(defects,bulk,vbm,cbm,customx=False,xxmin=1,xxmax=4,customy=False,yymin=1,yymax=4):
+@dataclass
+class Defect:
+    name: str
+    charge: int
+    energy: float       # Ha
+    mu_added: float     # Ha
+    correction: float   # eV
+    defect_type: str    # 'i', 's', 'v'
+    site: str
+    mu_removed: float   # Ha
+
+
+def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None):
     """
-    Plots CTL diagrams for input defects
+    Plots CTL diagrams for input defects.
 
-    defects: list of lists with format ['Defect Specie', Charge, Defect Cell Energy, Chemical Potential of added species, Err correction, Defect type ('i', 's', 'v' for interstial, substional or vacancy), Site name (e.g. O for an O site. Can be left as '' for interstial), Chemical potential for removed species)
-    bulk: Energy of pristine cell
-    vmb: vbm energy
-    cbm: cbm energy
-
-    note - all energies should be given in Ha
+    defects: list of Defect dataclass instances
+    bulk: energy of pristine cell (Ha)
+    vbm: VBM energy (Ha)
+    cbm: CBM energy (Ha)
     """
-
+    
     Ha_to_eV = 27.211386
 
     E_cbm = cbm * Ha_to_eV
     E_vbm = vbm * Ha_to_eV
 
-    xmax=round((E_cbm-E_vbm)+1)
-    #E_fermi = np.linspace(vbm-1,cbm+1,)
-    E_fermi = np.linspace(-1,xmax,((xmax+1)*100)+1)
+    xmax = round((E_cbm - E_vbm) + 1)
+    E_fermi = np.linspace(-1, xmax, ((xmax + 1) * 100) + 1)
 
-    
+    type_labels = {
+        'i': lambda d: f"{d.name}_i",
+        's': lambda d: f"{d.name}_{d.site}",
+        'v': lambda d: f"V_{d.site}",
+    }
+
     types = {}
-    n=0
-    while n < len(defects):
-        type_key = defects[n][0]+defects[n][5]+defects[n][6]
-
+    for defect in defects:
+        type_key = defect.name + defect.defect_type + defect.site
         if type_key not in types:
             types[type_key] = []
-        types[type_key].append(defects[n])
+        types[type_key].append(defect)
 
-        n=n+1
-    
-    E_low={}
+    E_low = {}
     defect_types = []
 
     for type_key, typegroup in types.items():
 
-        
-    
-        E_={}
-        xequal0_={}
-        xequalcbm_={}
-        ymin1 = float(1000)
-        ymin2 = float(1000)
-        ymax = float(-1000)
+        first = typegroup[0]
+        defect_type = type_labels[first.defect_type](first)
 
-        m=0
+        E_ = {}
+        ymin1 = float('inf')
+        ymin2 = float('inf')
+        ymax_group = float('-inf')
 
-        
+        for i, defect in enumerate(typegroup):
+            name = defect.name + '_' + defect.defect_type + str(defect.charge)
+            base_E = (defect.energy * Ha_to_eV - bulk * Ha_to_eV - defect.mu_added * Ha_to_eV + defect.mu_removed * Ha_to_eV + defect.correction)
 
-        for defect in typegroup:
-            name = str(defect[0])+'_'+defect[5]+str(defect[1])
-            E_[name] = defect[2]*Ha_to_eV - bulk*Ha_to_eV - defect[3]*Ha_to_eV + defect[7]*Ha_to_eV + defect[1] * (E_vbm + E_fermi) + defect[4]
+            E_[name] = base_E + defect.charge * (E_vbm + E_fermi)
 
-            if typegroup[0][5] == 'i':
-                defect_type = str(defect[0])+'_'+str(defect[5])
-            if typegroup[0][5] == 's':
-                defect_type = str(defect[0])+'_'+str(defect[6])
-            if typegroup[0][5] == 'v':
-                defect_type = 'V_'+str(defect[6])
-            
-            
-            if m == 0:
+            if i == 0:
                 defect_types.append(defect_type)
-                E_low[defect_type] = np.minimum(10000, E_[name])
+                E_low[defect_type] = E_[name]
             else:
                 E_low[defect_type] = np.minimum(E_low[defect_type], E_[name])
 
-            xequal0_[name] = defect[2]*Ha_to_eV - bulk*Ha_to_eV - defect[3]*Ha_to_eV + defect[7]*Ha_to_eV + defect[1] * (E_vbm) + defect[4]
-            ymin1 = np.minimum(ymin1, xequal0_[name])
-            ymax = np.maximum(ymax, xequal0_[name])
+            e_at_vbm = base_E + defect.charge * E_vbm
+            e_at_cbm = base_E + defect.charge * E_cbm
 
-            xequalcbm_[name] = defect[2]*Ha_to_eV - bulk*Ha_to_eV - defect[3]*Ha_to_eV + defect[7]*Ha_to_eV + defect[1] * (E_cbm) + defect[4]
-            ymin2 = np.minimum(ymin2, xequalcbm_[name])
+            ymin1 = min(ymin1, e_at_vbm)
+            ymax_group = max(ymax_group, e_at_vbm)
+            ymin2 = min(ymin2, e_at_cbm)
 
-            m=m+1
+        ymin = round(min(ymin1, ymin2) - 1)
+        ymax = round(ymax_group + 1)
 
-        ymin = np.minimum(ymin1, ymin2)
-        ymin = round(ymin - 1)
-        ymax = round(ymax + 1)
+        title = type_labels[first.defect_type](first)
 
-        plt.figure(figsize=(15,10))
-        if typegroup[0][5] == 'i':
-            plt.title(f'{typegroup[0][0]}$_{'i'}$ Charge Levels', size=40, pad=30)
-        if typegroup[0][5] == 's':
-            plt.title(f'{typegroup[0][0]}$_{{{typegroup[0][6]}}}$ Charge Levels', size=40, pad=30)
-        if typegroup[0][5] == 'v':
-            plt.title(f'V$_{{{typegroup[0][6]}}}$ Charge Levels', size=40, pad=30)
-        plt.xlabel('Fermi Energy (eV)', size=30, labelpad=30) 
+        plt.figure(figsize=(15, 10))
+        plt.title(title, size=40, pad=30)
+        plt.xlabel('Fermi Energy (eV)', size=30, labelpad=30)
         plt.ylabel('Formation Energy (eV)', size=30, labelpad=30)
 
-        #VBM and CBM 
         plt.axvline(x=0, color='tab:green', linestyle='-', alpha=0.5)
-        plt.axvline(x=E_cbm-E_vbm, color='tab:orange', linestyle='-', alpha=0.5)
-        plt.fill([-1,0,0,-1], [ymin,ymin,ymax,ymax], 'tab:green',[E_cbm-E_vbm,xmax,xmax,E_cbm-E_vbm], [ymin,ymin,ymax,ymax], 'tab:orange', alpha=0.2)
+        plt.axvline(x=E_cbm - E_vbm, color='tab:orange', linestyle='-', alpha=0.5)
+        plt.fill([-1, 0, 0, -1], [ymin, ymin, ymax, ymax], 'tab:green', [E_cbm - E_vbm, xmax, xmax, E_cbm - E_vbm], [ymin, ymin, ymax, ymax], 'tab:orange', alpha=0.2)
 
-        #Defect Plots
         for defect in typegroup:
-
-            name = str(defect[0])+'_'+defect[5]+str(defect[1])
-
-            if defect[1] > 0:
-                plt.plot(E_fermi, E_[name], marker = '', lw=3, label=f'{str(abs(defect[1]))}{'+'}')
-            elif defect[1] < 0:
-                plt.plot(E_fermi, E_[name], marker = '', lw=3, label=f'{str(abs(defect[1]))}{'-'}')
+            name = defect.name + '_' + defect.defect_type + str(defect.charge)
+            if defect.charge > 0:
+                label = f'{abs(defect.charge)}+'
+            elif defect.charge < 0:
+                label = f'{abs(defect.charge)}-'
             else:
-                plt.plot(E_fermi, E_[name], marker = '', lw=3, label='neutral')
+                label = 'neutral'
+            plt.plot(E_fermi, E_[name], marker='', lw=3, label=label)
 
+        if xlim is not None:
+            plt.xlim(xlim)
+        else:
+            plt.xlim([-1, xmax])
 
-
-        #Lowest state line
-        #plt.plot(E_fermi, x_int, linestyle='--', color='k', lw=2, label='')
-
-        #Other details
-        if customx == True:
-            plt.xlim([xxmin,xxmax])
-            plt.xticks(np.linspace(xxmin,xxmax,abs(xxmax-xxmin)+1),fontsize=20)
-        if customx == False:
-            plt.xlim([-1,xmax])
-            plt.xticks(np.linspace(-1,xmax,abs(xmax)+2),fontsize=20)
-        if customy == True:
-            plt.ylim([yymin,yymax])
-            plt.yticks(np.linspace(yymin,yymax,abs(yymax-yymin)+1),fontsize=20)
-        if customy == False:
-            plt.ylim([ymin,ymax])
+        plt.xticks(fontsize=20)
+        if ylim is not None:
+            plt.ylim(ylim)
+        else:
+            plt.ylim([ymin, ymax])
             if ymin == 0 or ymax == 0:
-                plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1),fontsize=20)
+                plt.yticks(np.linspace(ymin, ymax, abs(ymin) + abs(ymax) + 1), fontsize=20)
             else:
-                if ymin/abs(ymin) == ymax/abs(ymax):
-                    plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)-1),fontsize=20)
+                if ymin / abs(ymin) == ymax / abs(ymax):
+                    plt.yticks(np.linspace(ymin, ymax, abs(ymin) + abs(ymax) - 1), fontsize=20)
                 else:
-                    plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1),fontsize=20)
+                    plt.yticks(np.linspace(ymin, ymax, abs(ymin) + abs(ymax) + 1), fontsize=20)
 
-        plt.grid(visible=0)#, which='major', axis='both',linestyle='--')
-
+        plt.grid(visible=0)
         plt.legend(markerscale=8.0, fontsize=20, loc='upper left')
+        plt.savefig(f'{title} CTL Diagram', bbox_inches='tight')
 
-        if typegroup[0][5] == 'i':
-            plt.savefig(f'{typegroup[0][0]}_i CTL Diagram', bbox_inches='tight')
-        if typegroup[0][5] == 's':
-            plt.savefig(f'{typegroup[0][0]}_{typegroup[0][6]} CTL Diagram', bbox_inches='tight')
-        if typegroup[0][5] == 'v':
-            plt.savefig(f'V_{typegroup[0][6]} CTL Diagram', bbox_inches='tight')
-
-
-    
-
-    plt.figure(figsize=(15,10))
+    plt.figure(figsize=(15, 10))
     plt.title('Charge Levels', size=40, pad=30)
-    plt.xlabel('Fermi Energy (eV)', size=30, labelpad=30) 
+    plt.xlabel('Fermi Energy (eV)', size=30, labelpad=30)
     plt.ylabel('Formation Energy (eV)', size=30, labelpad=30)
 
+    ymin = float('inf')
+    ymax = float('-inf')
 
-    ymin=float(1000)
-    ymax=float(-1000)
-    n=0
-    while n < len(defect_types):
-        ymin = np.minimum(ymin, np.min(E_low[defect_types[n]]))
-        ymax = np.maximum(ymax, np.max(E_low[defect_types[n]]))
-        n=n+1
-    
+    for defect_type in defect_types:
+        ymin = min(ymin, np.min(E_low[defect_type]))
+        ymax = max(ymax, np.max(E_low[defect_type]))
+
     ymin = round(ymin - 1)
     ymax = round(ymax + 1)
-    #VBM and CBM 
+
     plt.axvline(x=0, color='tab:green', linestyle='-', alpha=0.5)
-    plt.axvline(x=E_cbm-E_vbm, color='tab:orange', linestyle='-', alpha=0.5)
-    plt.fill([-1,0,0,-1], [ymin,ymin,ymax,ymax], 'tab:green',[E_cbm-E_vbm,xmax,xmax,E_cbm-E_vbm], [ymin,ymin,ymax,ymax], 'tab:orange', alpha=0.2)
+    plt.axvline(x=E_cbm - E_vbm, color='tab:orange', linestyle='-', alpha=0.5)
+    plt.fill([-1, 0, 0, -1], [ymin, ymin, ymax, ymax], 'tab:green',
+             [E_cbm - E_vbm, xmax, xmax, E_cbm - E_vbm], [ymin, ymin, ymax, ymax], 'tab:orange', alpha=0.2)
 
-    n=0
-    while n < len(defect_types):
-        plt.plot(E_fermi, E_low[defect_types[n]], marker = '', lw=3, label=f'{defect_types[n]}')
-        n=n+1
+    for defect_type in defect_types:
+        plt.plot(E_fermi, E_low[defect_type], marker='', lw=3, label=f'{defect_type}')
 
-    plt.xlim([-1,xmax])
-    plt.ylim([ymin,ymax])
-    plt.xticks(np.linspace(-1,xmax,abs(xmax)+2),fontsize=20)
+    plt.xlim([-1, xmax])
+    plt.ylim([ymin, ymax])
+    plt.xticks(np.linspace(-1, xmax, abs(xmax) + 2), fontsize=20)
     if ymin == 0 or ymax == 0:
-            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1),fontsize=20)
+        plt.yticks(np.linspace(ymin, ymax, abs(ymin) + abs(ymax) + 1), fontsize=20)
     else:
-        if ymin/abs(ymin) == ymax/abs(ymax):
-            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)-1),fontsize=20)
+        if ymin / abs(ymin) == ymax / abs(ymax):
+            plt.yticks(np.linspace(ymin, ymax, abs(ymin) + abs(ymax) - 1), fontsize=20)
         else:
-            plt.yticks(np.linspace(ymin,ymax,abs(ymin)+abs(ymax)+1),fontsize=20)
+            plt.yticks(np.linspace(ymin, ymax, abs(ymin) + abs(ymax) + 1), fontsize=20)
 
     plt.legend(markerscale=5.0, fontsize=20, loc='upper left')
-
     plt.savefig('Charge Levels', bbox_inches='tight')
 
 
