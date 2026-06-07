@@ -2,8 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from dataclasses import dataclass
+import matplotlib.colors as mcolors
 
-colors = plt.cm.tab10.colors
+# colors = plt.cm.tab10.colors
+colors = ['tab:blue', 'tab:red', 'tab:cyan', 'tab:pink', 'tab:olive', 'tab:brown', 'tab:purple', 'tab:gray']
+# colors = ['#0072B2','#E69F00','#009E73','#D55E00','#CC79A7','#56B4E9','#F0E442']
+plt.rcParams['font.family'] = 'Arial'
 Ha_to_eV = 27.211386
 
 @dataclass
@@ -18,7 +22,25 @@ class Defect:
     mu_removed: float   # Ha
 
 
-def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None):
+def gradient_fill(ax, x_start, x_end, ymin, ymax, color, fade_direction, alpha_max=0.3):
+    """
+    Adds a horizontal gradient fill between x_start and x_end.
+    fade_direction: 'left'  — opaque at x_start, fades right
+                    'right' — opaque at x_end,   fades left
+    """
+    rgba = np.zeros((1, 256, 4))
+    base = mcolors.to_rgba(color)
+    
+    alphas = np.linspace(alpha_max, 0, 256) if fade_direction == 'left' else np.linspace(0, alpha_max, 256)
+    
+    rgba[0, :, :3] = base[:3]  # RGB constant across gradient
+    rgba[0, :, 3]  = alphas    # alpha varies
+
+    ax.imshow(rgba, aspect='auto', extent=[x_start, x_end, ymin, ymax],
+              origin='lower', zorder=0, interpolation='bilinear')
+
+
+def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None, title=False, legendpos=None):
     """
     Plots CTL diagrams for input defects.
 
@@ -84,26 +106,91 @@ def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None):
         ymin = round(min(ymin1, ymin2) - 1)
         ymax = round(ymax_group + 1)
 
-        title = type_labels[first.defect_type](first)
+        type_labels = {'i': lambda d: f"{d.name}$_{'i'}$", 's': lambda d: f"{d.name}$_{d.site}$", 'v': lambda d: f"V$_{d.site}$"}
+        title = str(type_labels[typegroup[0].defect_type](typegroup[0])) + ' Charge Levels'
 
         plt.figure(figsize=(15, 10))
-        plt.title(title, size=40, pad=30)
+        if title == True:
+            plt.title(title, size=40, pad=30)
         plt.xlabel('Fermi Energy (eV)', size=30, labelpad=30)
         plt.ylabel('Formation Energy (eV)', size=30, labelpad=30)
 
+        ax = plt.gca()
+
         plt.axvline(x=0, color='tab:green', linestyle='-', alpha=0.5)
         plt.axvline(x=E_cbm - E_vbm, color='tab:orange', linestyle='-', alpha=0.5)
-        plt.fill([-1, 0, 0, -1], [ymin, ymin, ymax, ymax], 'tab:green', [E_cbm - E_vbm, xmax, xmax, E_cbm - E_vbm], [ymin, ymin, ymax, ymax], 'tab:orange', alpha=0.2)
-
-        for defect in typegroup:
+        gradient_fill(ax, -1, 0, ymin, ymax, 'tab:green', fade_direction='right', alpha_max=0.6)
+        gradient_fill(ax, E_cbm - E_vbm, xmax, ymin, ymax, 'tab:orange', fade_direction='left', alpha_max=0.6)
+        
+        for i, defect in enumerate(typegroup):
             name = defect.name + '_' + defect.defect_type + str(defect.charge)
+            color = colors[i % len(colors)]
+            
             if defect.charge > 0:
-                label = f'{abs(defect.charge)}+'
+                label = f'${abs(defect.charge)}^+$'
             elif defect.charge < 0:
-                label = f'{abs(defect.charge)}-'
+                label = f'${abs(defect.charge)}^-$'
             else:
                 label = 'neutral'
-            plt.plot(E_fermi, E_[name], marker='', lw=3, label=label)
+            
+            is_lowest = np.isclose(E_[name], E_low[defect_type], atol=1e-6)
+            solid  = np.where(is_lowest,  E_[name], np.nan)
+            dashed = np.where(~is_lowest, E_[name], np.nan)
+
+            plt.plot(E_fermi, solid,  marker='', lw=3, color=color, label=label, zorder=4)
+            plt.plot(E_fermi, dashed, marker='', lw=3, color=color, linestyle='--', alpha=0.7, zorder=3)
+
+        transitions = []
+
+        # Find which charge state is lowest at each Fermi energy point
+        lowest_charge_at_each_point = []
+        for ef_idx in range(len(E_fermi)):
+            lowest_charge = min(
+                typegroup,
+                key=lambda d: E_[d.name + '_' + d.defect_type + str(d.charge)][ef_idx]
+            ).charge
+            lowest_charge_at_each_point.append(lowest_charge)
+
+        lowest_charge_at_each_point = np.array(lowest_charge_at_each_point)
+
+        # Find where the lowest charge state changes
+        change_indices = np.where(np.diff(lowest_charge_at_each_point) != 0)[0]
+
+        for idx in change_indices:
+            q1 = lowest_charge_at_each_point[idx]
+            q2 = lowest_charge_at_each_point[idx + 1]
+
+            name1 = typegroup[0].name + '_' + typegroup[0].defect_type + str(q1)
+            name2 = typegroup[0].name + '_' + typegroup[0].defect_type + str(q2)
+
+            # Precise crossing via linear interpolation
+            diff = E_[name1] - E_[name2]
+            x1, x2 = E_fermi[idx], E_fermi[idx + 1]
+            y1, y2 = diff[idx], diff[idx + 1]
+            E_cross = x1 - y1 * (x2 - x1) / (y2 - y1)
+            E_form_cross = np.interp(E_cross, E_fermi, E_[name1])
+
+            transitions.append({
+                'E_fermi': E_cross,
+                'E_form': E_form_cross,
+                'label': f'$\\epsilon$({q1:+}/{q2:+})'
+            })
+
+        
+
+        band_gap = E_cbm - E_vbm
+
+        for trans in transitions:
+            # Only show transitions within the band gap
+            if -1 <= trans['E_fermi'] <= band_gap + 1:
+                ax.axvline(x=trans['E_fermi'], color='k', linestyle=':', lw=1, alpha=0.4, zorder=2)
+                ax.plot(trans['E_fermi'], trans['E_form'], 'ko', markersize=10, zorder=5)
+                # ax.annotate(
+                # trans['label'],
+                # xy=(trans['E_fermi'], ymin + 0.2),
+                # ha='center',
+                # fontsize=14
+                # )
 
         if xlim is not None:
             plt.xlim(xlim)
@@ -111,8 +198,10 @@ def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None):
             plt.xlim([-1, xmax])
 
         plt.xticks(fontsize=20)
+
         if ylim is not None:
             plt.ylim(ylim)
+            plt.yticks(fontsize=20)
         else:
             plt.ylim([ymin, ymax])
             if ymin == 0 or ymax == 0:
@@ -123,46 +212,22 @@ def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None):
                 else:
                     plt.yticks(np.linspace(ymin, ymax, abs(ymin) + abs(ymax) + 1), fontsize=20)
 
+        plt.tick_params(axis='both', which='major', direction='in', length=6, width=1.5, labelsize=20)
+        plt.tick_params(axis='both', which='minor', direction='in', length=3)
+        plt.minorticks_on()
+
+        
+        for spine in ax.spines.values():
+            spine.set_linewidth(1.5)
+
         plt.grid(visible=0)
-        plt.legend(markerscale=8.0, fontsize=20, loc='upper left')
-        plt.savefig(f'{title} CTL Diagram', bbox_inches='tight')
-
-    plt.figure(figsize=(15, 10))
-    plt.title('Charge Levels', size=40, pad=30)
-    plt.xlabel('Fermi Energy (eV)', size=30, labelpad=30)
-    plt.ylabel('Formation Energy (eV)', size=30, labelpad=30)
-
-    ymin = float('inf')
-    ymax = float('-inf')
-
-    for defect_type in defect_types:
-        ymin = min(ymin, np.min(E_low[defect_type]))
-        ymax = max(ymax, np.max(E_low[defect_type]))
-
-    ymin = round(ymin - 1)
-    ymax = round(ymax + 1)
-
-    plt.axvline(x=0, color='tab:green', linestyle='-', alpha=0.5)
-    plt.axvline(x=E_cbm - E_vbm, color='tab:orange', linestyle='-', alpha=0.5)
-    plt.fill([-1, 0, 0, -1], [ymin, ymin, ymax, ymax], 'tab:green',
-             [E_cbm - E_vbm, xmax, xmax, E_cbm - E_vbm], [ymin, ymin, ymax, ymax], 'tab:orange', alpha=0.2)
-
-    for defect_type in defect_types:
-        plt.plot(E_fermi, E_low[defect_type], marker='', lw=3, label=f'{defect_type}')
-
-    plt.xlim([-1, xmax])
-    plt.ylim([ymin, ymax])
-    plt.xticks(np.linspace(-1, xmax, abs(xmax) + 2), fontsize=20)
-    if ymin == 0 or ymax == 0:
-        plt.yticks(np.linspace(ymin, ymax, abs(ymin) + abs(ymax) + 1), fontsize=20)
-    else:
-        if ymin / abs(ymin) == ymax / abs(ymax):
-            plt.yticks(np.linspace(ymin, ymax, abs(ymin) + abs(ymax) - 1), fontsize=20)
+        if legendpos is None:
+            plt.legend(frameon=False,markerscale=5.0, fontsize=20, loc='best')
         else:
-            plt.yticks(np.linspace(ymin, ymax, abs(ymin) + abs(ymax) + 1), fontsize=20)
+            plt.legend(frameon=False,markerscale=5.0, fontsize=20, loc="lower left", bbox_to_anchor=legendpos)
+        plt.savefig(f'{title} CTL Diagram.pdf', bbox_inches='tight', dpi=300)
 
-    plt.legend(markerscale=5.0, fontsize=20, loc='upper left')
-    plt.savefig('Charge Levels', bbox_inches='tight')
+
 
 
 
