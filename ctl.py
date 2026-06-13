@@ -4,10 +4,11 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from dataclasses import dataclass
 import matplotlib.colors as mcolors
+from collections import defaultdict
 
 # colors = plt.cm.tab10.colors
-colors = ['tab:blue', 'tab:red', 'tab:cyan', 'tab:pink', 'tab:olive', 'tab:brown', 'tab:purple', 'tab:gray']
 # colors = ['#0072B2','#E69F00','#009E73','#D55E00','#CC79A7','#56B4E9','#F0E442']
+colors = ['tab:blue', 'tab:red', 'tab:cyan', 'tab:pink', 'tab:olive', 'tab:brown', 'tab:purple', 'tab:gray']
 plt.rcParams['font.family'] = 'Arial'
 Ha_to_eV = 27.211386
 
@@ -76,10 +77,8 @@ def plot_ctl(defects, bulk, vbm, cbm, plot_options=None):
         'v': lambda d: f"V_{d.site}",
     }
 
-    types = {}
+    types = defaultdict(list)
     for defect in defects:
-        if defect.label not in types:
-            types[defect.label] = []
         types[defect.label].append(defect)
 
     E_low = {}
