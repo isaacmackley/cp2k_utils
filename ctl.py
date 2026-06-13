@@ -1,3 +1,4 @@
+from more_itertools import first
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -20,7 +21,14 @@ class Defect:
     defect_type: str    # 'i', 's', 'v'
     site: str
     mu_removed: float   # Ha
+    label: str
 
+@dataclass
+class PlotOptions:
+    xlim: tuple = None
+    ylim: tuple = None
+    legend_loc: str = 'upper left'
+    legend_frameon: bool = False
 
 def gradient_fill(ax, x_start, x_end, ymin, ymax, color, fade_direction, alpha_max=0.3):
     """
@@ -40,7 +48,7 @@ def gradient_fill(ax, x_start, x_end, ymin, ymax, color, fade_direction, alpha_m
               origin='lower', zorder=0, interpolation='bilinear')
 
 
-def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None, title=False, legendpos=None):
+def plot_ctl(defects, bulk, vbm, cbm, plot_options=None):
     """
     Plots CTL diagrams for input defects.
 
@@ -50,6 +58,10 @@ def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None, title=False, legendp
     cbm: CBM energy (Ha)
     """
     
+    if plot_options is None:
+        plot_options = {}
+    default_options = PlotOptions()
+
     Ha_to_eV = 27.211386
 
     E_cbm = cbm * Ha_to_eV
@@ -66,10 +78,9 @@ def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None, title=False, legendp
 
     types = {}
     for defect in defects:
-        type_key = defect.name + defect.defect_type + defect.site
-        if type_key not in types:
-            types[type_key] = []
-        types[type_key].append(defect)
+        if defect.label not in types:
+            types[defect.label] = []
+        types[defect.label].append(defect)
 
     E_low = {}
     defect_types = []
@@ -106,8 +117,11 @@ def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None, title=False, legendp
         ymin = round(min(ymin1, ymin2) - 1)
         ymax = round(ymax_group + 1)
 
-        type_labels = {'i': lambda d: f"{d.name}$_{'i'}$", 's': lambda d: f"{d.name}$_{d.site}$", 'v': lambda d: f"V$_{d.site}$"}
         title = str(type_labels[typegroup[0].defect_type](typegroup[0])) + ' Charge Levels'
+
+        generated_label = type_labels[first.defect_type](first)
+        plot_key = first.label if first.label is not None else generated_label
+        opts = plot_options.get(plot_key, default_options)
 
         plt.figure(figsize=(15, 10))
         if title == True:
@@ -192,15 +206,15 @@ def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None, title=False, legendp
                 # fontsize=14
                 # )
 
-        if xlim is not None:
-            plt.xlim(xlim)
+        if opts.xlim is not None:
+            plt.xlim(opts.xlim)
         else:
             plt.xlim([-1, xmax])
 
         plt.xticks(fontsize=20)
 
-        if ylim is not None:
-            plt.ylim(ylim)
+        if opts.ylim is not None:
+            plt.ylim(opts.ylim)
             plt.yticks(fontsize=20)
         else:
             plt.ylim([ymin, ymax])
@@ -220,11 +234,9 @@ def plot_ctl(defects, bulk, vbm, cbm, xlim=None, ylim=None, title=False, legendp
         for spine in ax.spines.values():
             spine.set_linewidth(1.5)
 
+        plt.legend(frameon=opts.legend_frameon, markerscale=5.0, fontsize=20, loc=opts.legend_loc)
         plt.grid(visible=0)
-        if legendpos is None:
-            plt.legend(frameon=False,markerscale=5.0, fontsize=20, loc='best')
-        else:
-            plt.legend(frameon=False,markerscale=5.0, fontsize=20, loc="lower left", bbox_to_anchor=legendpos)
+
         plt.savefig(f'{title} CTL Diagram.pdf', bbox_inches='tight', dpi=300)
 
 
