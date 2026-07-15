@@ -303,6 +303,7 @@ class StyleOptions:
     bypassed_linewidth: float = None    # None -> match ctl_linewidth
     bypassed_alpha: float = 0.45
     leader_linewidth: float = 1.0
+    ctl_colour: str = None
 
 
 
@@ -1383,6 +1384,8 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
  
     # CTL distribution marks. Each value is a Fermi energy above that material's
     # own VBM; map it onto the common (CBO-aligned) axis before plotting.
+    def colour_for(trans):
+        return opts.ctl_colour if opts.ctl_colour else transition_colour(trans)
     seen_transitions = {}     # legend: thermo transitions only
     for x_centre, dname, mname in columns:
         m = mat_by_name[mname]
@@ -1403,7 +1406,7 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
                 continue
             w = 0.0 if n_t <= 1 else 0.4 / (n_t - 1)
             xm = x_centre + w * (j - (n_t - 1) / 2)
-            colour = transition_colour(trans)
+            colour = colour_for(trans)
             seen_transitions.setdefault(trans, colour)
 
             common_vals = [m.ctl_on_axis(v, ref_cbm_disp) for v in values]
@@ -1429,7 +1432,7 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
                 values = entry['values']
                 if not values:
                     continue
-                colour = transition_colour(trans)
+                colour = colour_for(trans)
                 common_vals = [m.ctl_on_axis(v, ref_cbm_disp) for v in values]
                 _, mean, _ = summarize(common_vals)
                 blw = opts.bypassed_linewidth if opts.bypassed_linewidth is not None \
@@ -1453,11 +1456,12 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
  
     if opts.legend:
         handles, labels = [], []
-        for trans, colour in sorted(
-                seen_transitions.items(),
-                key=lambda kv: max(_parse_transition(kv[0])), reverse=True):
-            handles.append(Line2D([0], [0], color=colour, lw=6))
-            labels.append(trans)
+        if not opts.ctl_colour:
+            for trans, colour in sorted(
+                    seen_transitions.items(),
+                    key=lambda kv: max(_parse_transition(kv[0])), reverse=True):
+                handles.append(Line2D([0], [0], color=colour, lw=6))
+                labels.append(trans)
         for fl in fermi_lines:
             handles.append(Line2D([0], [0], color=fl.colour or 'k',
                                    lw=3, linestyle='--'))
