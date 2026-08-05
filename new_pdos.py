@@ -120,7 +120,7 @@ class ElementPDOS:
 
 class PDOSPlotter:
 
-    def __init__(self, elements, spin=True, grid=False, sigma=0.003, vbm=0, xmin=-3, xmax=6, figw=25, figh=10):
+    def __init__(self, elements, spin=True, grid=False, sigma=0.003, vbm=0, xmin=-3, xmax=6, figw=25, figh=10, output='DOS.png'):
         self.elements = [ElementPDOS(name, i + 1, spin, sigma) for i, name in enumerate(elements)]
         self.spin = spin
         self.grid = grid
@@ -129,7 +129,7 @@ class PDOSPlotter:
         self.xmax = xmax
         self.figw = figw
         self.figh = figh
-
+        self.output = output
 
     def plot_individual(self):
 
@@ -138,7 +138,7 @@ class PDOSPlotter:
             plt.figure(figsize=(self.figw, self.figh))
             plt.title(f"{element.name} Density of States", size=40)
             plt.xlabel('Energy (eV)', size=30) 
-            plt.ylabel('Denisty of States (arb.)', size=30)
+            plt.ylabel('Density of States (arb.)', size=30)
 
             plt.axvline(x=self.vbm, color='k', linestyle='--', alpha=0.5)
             plt.axvline(x=0, color='k', linestyle='--', alpha=0.5)
@@ -172,15 +172,30 @@ class PDOSPlotter:
 
             plt.show()
 
+    def _get_efermi(self):
+        # Fermi energy (Hartree) from the PDOS header, matching the
+        # reference smeared_pdos uses to shift the DOS x-axis to 0.
+        el = self.elements[0]
+        files = [el.alpha_file]
+        if self.spin and el.beta_file:
+            files.append(el.beta_file)
+
+        efermi = -1000.0
+        for path in files:
+            with open(path) as fh:
+                match = HEADER_MATCH.match(fh.readline().rstrip())
+                efermi = max(efermi, float(match.group('Efermi')))
+        return efermi
+
     def plot_total(self):
         
         plt.figure(figsize=(self.figw, self.figh))
-        plt.title("Density of States", size=40)
-        plt.xlabel('Energy (eV)', size=30) 
-        plt.ylabel('Denisty of States (arb.)', size=30)
+        # plt.title("Density of States", size=40)
+        plt.xlabel('Fermi Energy (eV)', size=30) 
+        plt.ylabel('Density of States (arb.)', size=30)
 
         plt.axvline(x=self.vbm, color='k', linestyle='--', alpha=0.5)
-        plt.axvline(x=0, color='k', linestyle='--', alpha=0.5)
+        # plt.axvline(x=0, color='k', linestyle='--', alpha=0.5)
         plt.axhline(y=0, color='k', linestyle='-', alpha=0.5)
 
         ymax = []
@@ -211,7 +226,82 @@ class PDOSPlotter:
             plt.grid(visible=1)
 
         plt.legend(markerscale=10.0, fontsize=20)
-        plt.savefig(f"DOS.png", bbox_inches='tight')
+        plt.savefig(self.output, bbox_inches='tight')
+
+        plt.show()
+
+
+    def plot_ipr(self, ipr_alpha_file='./IPR_output-Alpha.dat',
+                 ipr_beta_file='./IPR_output-Beta.dat'):
+
+        plt.figure(figsize=(self.figw, self.figh))
+        plt.title("Density of States", size=40)
+        plt.xlabel('Energy (eV)', size=30)
+        plt.ylabel('Density of States (arb.)', size=30)
+
+        plt.axvline(x=self.vbm, color='k', linestyle='--', alpha=0.5)
+        plt.axvline(x=0, color='k', linestyle='--', alpha=0.5)
+        plt.axhline(y=0, color='k', linestyle='-', alpha=0.5)
+
+        ymax = []
+
+        for element in self.elements:
+            x, alpha, beta = element.extract_orbitals()
+
+            color = ELEMENT_COLOURS[element.name]
+
+            alpha_vals = np.sum(alpha, axis=0)
+            beta_vals = np.sum(beta, axis=0)
+
+            plt.plot(x, alpha_vals, label=f"{element.name}", color=color)
+            if self.spin:
+                plt.plot(x, beta_vals, color=color)
+
+            ymax = np.append(ymax, element.get_ymax(self.xmin, self.xmax))
+
+        plt.xlim([self.xmin, self.xmax])
+        plt.xticks(np.linspace(self.xmin, self.xmax, int((abs(self.xmin)+self.xmax))+1), fontsize=20)
+
+        ymax = max(ymax)
+        ymax = np.ceil(ymax * 10) / 10 if ymax > 0.1 else np.ceil(ymax * 100) / 100
+        plt.ylim([-ymax, ymax] if self.spin else [0, ymax])
+        plt.yticks([])
+
+        if self.grid:
+            plt.grid(visible=1)
+
+        # --- IPR on a twin axis ---
+        ax = plt.gca()
+        ax2 = ax.twinx()
+        ax2.set_ylabel('IPR', size=30)
+
+        Ha_to_eV = 27.211386
+        efermi = self._get_efermi()
+
+        def read_ipr(path):
+            xs, ys = [], []
+            with open(path, 'r') as fh:
+                for line in fh:
+                    cols = line.split()
+                    if not cols:
+                        continue
+                    xs.append((float(cols[0]) - efermi) * Ha_to_eV)
+                    ys.append(float(cols[1]))
+            return xs, ys
+
+        ipr_x_alpha, ipr_y_alpha = read_ipr(ipr_alpha_file)
+        for xi, yi in zip(ipr_x_alpha, ipr_y_alpha):
+            ax2.vlines(xi, 0, yi, colors='k', linewidth=1)
+
+        if self.spin:
+            ipr_x_beta, ipr_y_beta = read_ipr(ipr_beta_file)
+            for xi, yi in zip(ipr_x_beta, ipr_y_beta):
+                ax2.vlines(xi, 0, yi, colors='k', linewidth=1)
+
+        ax2.set_yticks([])   # hide IPR y-axis values
+
+        ax.legend(markerscale=10.0, fontsize=20)
+        plt.savefig("DOS_IPR.png", bbox_inches='tight')
 
         plt.show()
 
@@ -443,7 +533,7 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
         plt.figure(figsize=(figw,figh))#.set_facecolor('#BCC2C3')
         plt.title(f"{elements[n-1]} Density of States", size=30) 
         plt.xlabel('Energy (eV)', size=20) 
-        plt.ylabel('Denisty of States (arb.)', size=20)
+        plt.ylabel('Density of States (arb.)', size=20)
 
 
         plt.axvline(x=vbm, color='k', linestyle='--', alpha=0.5)
@@ -529,7 +619,7 @@ def pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,figw
     plt.figure(figsize=(figw,figh))
     plt.title("Total Density of States", size=40) 
     plt.xlabel('Energy (eV)', size=30) 
-    plt.ylabel('Denisty of States (arb.)', size=30)
+    plt.ylabel('Density of States (arb.)', size=30)
 
     if spin==True:
         ymax = max(max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_beta_tot']) if xmin <= x <= xmax], key=abs))
@@ -705,7 +795,7 @@ def ipr_pdos_plot(elements,spin=True,sigma=0.003,vbm=0,grid=True,xmin=-3,xmax=6,
     
     ax = plt.subplot()
     ax.set_xlabel('Energy (eV)', size=30) 
-    ax.set_ylabel('Denisty of States (arb.)', size=30)
+    ax.set_ylabel('Density of States (arb.)', size=30)
 
     if spin==True:
         ymax = max(max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_alpha_tot']) if xmin <= x <= xmax]), max([y for x, y in zip(plots[f'{elements[0]}_x'], plots[f'{elements[0]}_beta_tot']) if xmin <= x <= xmax], key=abs))

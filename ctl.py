@@ -140,11 +140,11 @@ def plot_ctl(defects, bulk, vbm, cbm, plot_options=None):
             color = colors[i % len(colors)]
             
             if defect.charge > 0:
-                label = f'${abs(defect.charge)}^+$'
+                label = f'q = ${abs(defect.charge)}^+$'
             elif defect.charge < 0:
-                label = f'${abs(defect.charge)}^-$'
+                label = f'q = ${abs(defect.charge)}^-$'
             else:
-                label = 'neutral'
+                label = 'q = $0$'
             
             is_lowest = np.isclose(E_[name], E_low[defect_type], atol=1e-6)
             solid  = np.where(is_lowest,  E_[name], np.nan)
