@@ -563,12 +563,19 @@ def plot_ctl(defects, bulk, vbm, cbm, style=None, save=True, show=False, save_fo
         ax.set_xlabel('Fermi Energy (eV)', size=opts.axes_fontsize, labelpad=30)
         ax.set_ylabel('Formation Energy (eV)', size=opts.axes_fontsize, labelpad=30)
  
+        if opts.ylim is not None:
+            y_lo, y_hi = opts.ylim
+        else:
+            y_lo, y_hi = ymin, ymax
+
         ax.axvline(x=0, color='tab:green', linestyle='-', alpha=0.5)
         ax.axvline(x=band_gap, color='tab:orange', linestyle='-', alpha=0.5)
-        gradient_fill(ax, -PAD, 0, ymin, ymax, 'tab:green',
+        gradient_fill(ax, -PAD, 0, y_lo, y_hi, 'tab:green',
                       fade_direction='right', alpha_max=opts.band_alpha)
-        gradient_fill(ax, band_gap, xmax, ymin, ymax, 'tab:orange',
+        gradient_fill(ax, band_gap, xmax, y_lo, y_hi, 'tab:orange',
                       fade_direction='left', alpha_max=opts.band_alpha)
+
+        ax.set_ylim([y_lo, y_hi])
  
         for d in group:
             curve = E_curves[d.key]
