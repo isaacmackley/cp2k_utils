@@ -1202,7 +1202,7 @@ def _place_labels(ax, specs, ymin, ymax, fontsize, x_pad=0.03, leader_lw=1.0):
  
 def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
                        style_kind='bar', precomputed_ctls=None, reference=None,
-                       style=None, save=False, show=True, filename=None):
+                       style=None, save=False, show=True, filename=None, xlabel=True):
     """
     Cross-material CTL summary with band alignment.
  
@@ -1350,7 +1350,8 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
     ax.set_ylim(ymin, ymax)
     ax.set_xlim(xmin, xmax)
     ax.set_ylabel('Fermi Energy (eV)', size=opts.axes_fontsize, labelpad=20)
-    ax.set_xlabel('Defects', size=opts.axes_fontsize, labelpad=30)
+    if xlabel==True:
+        ax.set_xlabel('Defects', size=opts.axes_fontsize, labelpad=30)
     ax.set_xticks([c[0] for c in columns])
     ax.set_xticklabels([label_title.get(c[1], c[1]) for c in columns],
                        fontsize=opts.ticks_fontsize)
