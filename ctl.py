@@ -51,6 +51,14 @@ def charge_label(charge: int) -> str:
         return f'${abs(charge)}^-$'
     return '$0$'
 
+def charge_str(charge: int) -> str:
+    """Plain-text charge label, number then sign: '1+', '0', '3-'."""
+    if charge > 0:
+        return f'{charge}+'
+    if charge < 0:
+        return f'{abs(charge)}-'
+    return '0'
+
 def _parse_charge(tok: str) -> int:
     """'2+' -> 2, '+1' -> 1, '0' -> 0, '3-' -> -3, '-2' -> -2. Tolerates
     surrounding parentheses/whitespace from compute_ctls labels like '(+1/0)'."""
@@ -404,7 +412,7 @@ def compute_ctls(config_defects, e_vbm, bulk):
         bypassed = [q for q in charges if lo_q < q < hi_q]
 
         transitions.append({
-            'transition': f'({q1:+}/{q2:+})',
+            'transition': f'({charge_str(q1)}/{charge_str(q2)})',
             'E_fermi': ef_cross,
             'E_form': e_form,
             'kind': 'thermo',
@@ -417,7 +425,7 @@ def compute_ctls(config_defects, e_vbm, bulk):
             for qa, qb in zip(seq[:-1], seq[1:]):
                 ef_b, ef_form_b = _pair_crossing(by_charge, qa, qb, e_vbm)
                 transitions.append({
-                    'transition': f'({qa:+}/{qb:+})',
+                    'transition': f'({charge_str(qa)}/{charge_str(qb)})',
                     'E_fermi': ef_b,
                     'E_form': ef_form_b,
                     'kind': 'bypassed',
