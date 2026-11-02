@@ -191,7 +191,7 @@ class PDOSPlotter:
         
         plt.figure(figsize=(self.figw, self.figh))
         # plt.title("Density of States", size=40)
-        plt.xlabel('Fermi Energy (eV)', size=30) 
+        plt.xlabel('Energy (eV)', size=30) 
         plt.ylabel('Density of States (arb.)', size=30)
 
         plt.axvline(x=self.vbm, color='k', linestyle='--', alpha=0.5)
