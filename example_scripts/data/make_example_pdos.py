@@ -12,7 +12,7 @@ import numpy as np
 
 rng = np.random.default_rng(1)
 Ha = 27.211386
-EF_HA = 0.2875                      # Fermi level written in the header (Ha) = VBM
+EF_HA = 0.3100                      # Fermi level written in the header (Ha) = VBM
 OUT = 'pdos'
 os.makedirs(OUT, exist_ok=True)
 

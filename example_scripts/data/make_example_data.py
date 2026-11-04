@@ -1,73 +1,110 @@
 """
-Generates the *illustrative* amorphous-ensemble CSV used by the
-plot_range_ctl and plot_multi_mat_ctl example notebooks.
+Generates the SYNTHETIC defect data used by the CTL example notebooks.
 
-The numbers are NOT real calculations. They are the crystalline HfO2 N_i and
-V_O energies from plot_ctl.ipynb, copied onto several made-up cells/sites with
-random noise added, so the example plots have a realistic-looking spread.
-Re-run with `python make_example_data.py` to regenerate the files.
+Nothing here comes from a real calculation. Each defect is defined by made-up
+target formation energies (eV, at E_F = VBM) for each charge state; these are
+converted into the 'total energies' that the package expects, and for the
+amorphous sets random noise is added per cell and per site. Material names
+(HfO2, SiO2) are only there to make the examples readable.
+
+Run `python make_example_data.py` in this folder to regenerate:
+    crystalline_defects.csv   one cell, one site per defect
+    amorphous_defects.csv     several cells x sites per defect, two materials
+    amorphous_cells.csv       band edges / bulk energy of each amorphous cell
 """
 import csv
 import numpy as np
 
-rng = np.random.default_rng(42)
+Ha = 27.211386
+rng = np.random.default_rng(7)
 
-N = -19.82216306984949 / 2      # chemical potential of N (Ha)
-O = -31.80451126833290 / 2      # chemical potential of O (Ha)
+MU = {'N': -10.0, 'O': -16.0}          # chemical potentials (Ha)
 
-REF_BULK = -2604.76801711694679
-REF_VBM = 0.287532
 
-# (name, defect_type, site, mu_added, mu_removed, label, title)
+def correction(q):
+    return round(0.06 * q ** 2, 5)     # made-up charge correction (eV)
+
+
+# defect key -> (name, type, site, mu_added, mu_removed, label, title)
 DEFECTS = {
-    'N_i': ('N', 'i', '', N, 0.0, 'N_i', None),
-    'V_O': ('O', 'v', 'O', 0.0, O, 'V_O', None),
-}
-# reference energies for each charge state (Ha) and charge corrections (eV)
-REF_ENERGIES = {
-    'N_i': {2: (-2615.18759465001131, 0.20648), 1: (-2614.87186971514484, 0.05162),
-            0: (-2614.52029755960666, 0.0), -1: (-2614.17935614371982, 0.05162)},
-    'V_O': {2: (-2589.39963503920580, 0.20648), 1: (-2589.00866444766143, 0.05162),
-            0: (-2588.61414089194932, 0.0), -1: (-2588.18012071979138, 0.05162)},
+    'N_i': ('N', 'i', '',  MU['N'], 0.0,     'N_i', ''),
+    'N_O': ('N', 's', 'O', MU['N'], MU['O'], 'N_O', ''),
+    'V_O': ('O', 'v', 'O', 0.0,     MU['O'], 'V_O', ''),
 }
 
-# material -> list of (cell_id, vbm, cbm, bulk) in Ha
-MATERIALS = {
-    'HfO2': [('a1', 0.2875, 0.4370, -2604.768),
-             ('a2', 0.2851, 0.4362, -2604.731),
-             ('a3', 0.2899, 0.4381, -2604.802)],
-    'SiO2': [('s1', 0.2010, 0.5330, -1530.412),
-             ('s2', 0.1985, 0.5302, -1530.388)],
+# target formation energy at the VBM (eV) per charge state
+TARGETS = {
+    'HfO2': {
+        'N_i': {2: 1.0, 1: 1.8, 0: 3.4, -1: 4.6, -2: 8.5},    # negative-U (1+/1-)
+        'N_O': {2: 3.5, 1: 3.8, 0: 4.5, -1: 6.0, -2: 9.5},
+        'V_O': {2: -1.0, 1: 2.5, 0: 5.6, -1: 10.4, -2: 15.6},  # negative-U (2+/0)
+    },
+    'SiO2': {
+        'N_i': {2: 0.5, 1: 2.0, 0: 5.0, -1: 8.5},
+        'V_O': {2: 1.0, 1: 4.0, 0: 7.5, -1: 13.0},
+    },
 }
-SITES_PER_CELL = 3
+
+HEADER = ['name', 'charge', 'energy', 'mu_added', 'correction', 'defect_type',
+          'site', 'mu_removed', 'label', 'title', 'cell_id', 'site_id', 'material']
+
+
+def total_energy(ef_vbm, q, bulk, vbm, mu_added, mu_removed):
+    """Invert E_f(VBM) = (E - bulk - mu_a + mu_r)*Ha + corr + q*VBM*Ha."""
+    return bulk + mu_added - mu_removed + (ef_vbm - correction(q) - q * vbm * Ha) / Ha
+
+
+def row(key, q, energy, cell_id, site_id, material):
+    name, dtype, site, mu_a, mu_r, label, title = DEFECTS[key]
+    return [name, q, round(energy, 8), mu_a, correction(q), dtype, site, mu_r,
+            label, title, cell_id, site_id, material]
+
+
+# ---------------- crystalline: one cell, exact targets ----------------
+CRYSTAL = dict(vbm=0.25, cbm=0.46, bulk=-1000.0)       # Ha (gap ~5.7 eV)
+rows = []
+for key, targets in TARGETS['HfO2'].items():
+    for q, ef in targets.items():
+        e = total_energy(ef, q, CRYSTAL['bulk'], CRYSTAL['vbm'], *DEFECTS[key][3:5])
+        rows.append(row(key, q, e, '', '', 'c-HfO2'))
+with open('crystalline_defects.csv', 'w', newline='') as fh:
+    w = csv.writer(fh)
+    w.writerow(HEADER)
+    w.writerows(rows)
+
+# ---------------- amorphous: several cells x sites, with noise ----------------
+AMORPHOUS = {   # material -> (n_cells, mean vbm, mean cbm, bulk, sites per cell)
+    'HfO2': (3, 0.25, 0.455, -1000.0, 8),
+    'SiO2': (2, 0.20, 0.530, -700.0, 8),
+}
+EDGE_SCATTER = 0.25 / Ha          # cell-to-cell band edge scatter (Ha)
+SITE_SCATTER = 0.25               # site-to-site shift of all charge states (eV)
+CHARGE_SCATTER = 0.12             # extra scatter per charge state (eV)
 
 defect_rows, cell_rows = [], []
-for mat, cells in MATERIALS.items():
-    for cell_id, vbm, cbm, bulk in cells:
+for mat, (n_cells, vbm0, cbm0, bulk0, n_sites) in AMORPHOUS.items():
+    for c in range(n_cells):
+        cell_id = f'{mat}_c{c + 1}'
+        vbm = round(vbm0 + rng.normal(0, EDGE_SCATTER), 6)
+        cbm = round(cbm0 + rng.normal(0, EDGE_SCATTER), 6)
+        bulk = round(bulk0 + rng.normal(0, 0.05), 6)
         cell_rows.append([mat, cell_id, vbm, cbm, bulk])
-        for key, (name, dtype, site, mu_a, mu_r, label, title) in DEFECTS.items():
-            for s in range(SITES_PER_CELL):
-                site_id = f'{cell_id}_site{s + 1}'
-                site_shift = rng.normal(0, 0.01)          # site-to-site scatter (Ha)
-                for q, (e_ref, corr) in REF_ENERGIES[key].items():
-                    # keep formation energies/CTLs similar to the reference,
-                    # re-referenced to this cell's bulk energy and VBM
-                    e = (e_ref - REF_BULK + bulk - q * (vbm - REF_VBM)
-                         + site_shift + rng.normal(0, 0.004))
-                    defect_rows.append([name, q, round(e, 8), mu_a, corr, dtype,
-                                        site, mu_r, label, title or '',
-                                        cell_id, site_id, mat])
+        for key, targets in TARGETS[mat].items():
+            for s in range(n_sites):
+                site_id = f'{cell_id}_s{s + 1}'
+                shift = rng.normal(0, SITE_SCATTER)
+                for q, ef in targets.items():
+                    ef_site = ef + shift + rng.normal(0, CHARGE_SCATTER)
+                    e = total_energy(ef_site, q, bulk, vbm, *DEFECTS[key][3:5])
+                    defect_rows.append(row(key, q, e, cell_id, site_id, mat))
 
 with open('amorphous_defects.csv', 'w', newline='') as fh:
     w = csv.writer(fh)
-    w.writerow(['name', 'charge', 'energy', 'mu_added', 'correction',
-                'defect_type', 'site', 'mu_removed', 'label', 'title',
-                'cell_id', 'site_id', 'material'])
+    w.writerow(HEADER)
     w.writerows(defect_rows)
-
 with open('amorphous_cells.csv', 'w', newline='') as fh:
     w = csv.writer(fh)
     w.writerow(['material', 'cell_id', 'vbm', 'cbm', 'bulk'])
     w.writerows(cell_rows)
 
-print(f'wrote {len(defect_rows)} defect rows and {len(cell_rows)} cells')
+print(f'crystalline: {len(rows)} rows; amorphous: {len(defect_rows)} rows, {len(cell_rows)} cells')
