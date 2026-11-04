@@ -10,7 +10,7 @@ Each feature has an example notebook in [`example_scripts/`](example_scripts/) w
 | CTL spread over many sites/cells (amorphous materials) | `ctl.plot_range_ctl` | [plot_range_ctl.ipynb](example_scripts/plot_range_ctl.ipynb) |
 | Band-aligned CTL summary over several defects and materials | `ctl.plot_multi_mat_ctl` | [plot_multi_mat_ctl.ipynb](example_scripts/plot_multi_mat_ctl.ipynb) |
 | Band offset diagrams (no defects needed) | `ctl.plot_multi_mat_ctl` | [plot_multi_mat_ctl.ipynb](example_scripts/plot_multi_mat_ctl.ipynb) (section 5) |
-| Projected DOS and IPR plots | `new_pdos.PDOSPlotter` | [pdos_plot.ipynb](example_scripts/pdos_plot.ipynb) |
+| Projected DOS and IPR plots | `pdos.PDOSPlotter` | [pdos_plot.ipynb](example_scripts/pdos_plot.ipynb) |
 | XYZ → CIF conversion | `structures.xyz_to_cif`, CLI `xyz-to-cif` | [below](#xyz-to-cif) |
 | Interstitial site generation from a density cube (WIP) | `defect_gen.int_gen` | [below](#interstitial-site-generator-wip) |
 
@@ -75,14 +75,14 @@ With no defects it draws just the band offset diagram.
 
 ---
 
-## PDOS (`cp2k_utils.new_pdos`)
+## PDOS (`cp2k_utils.pdos`)
 
 `PDOSPlotter` reads the CP2K `.pdos` files in the current folder and applies Gaussian smearing. Spin-polarised and non-polarised runs are both supported. It plots:
 - per-element plots: the element total shaded in its Jmol colour, with s / p / d / f lines in fixed colours shared by all elements,
 - the total for each element, in Jmol colours,
 - the total with the IPR of each state on a second axis. Spin-up sticks point up and spin-down sticks point down, like the DOS.
 
-`smeared_pdos` returns the smeared data without plotting. The older function interface (`pdos_plot`, `ipr_pdos_plot`) is still in `cp2k_utils.pdos`.
+`smeared_pdos` returns the smeared data without plotting. The older function interface (`pdos_plot`, `ipr_pdos_plot`) is still available in the same module. The original module is archived in `old/pdos_old.py`.
 
 <img src="docs/images/pdos_total.png" width="420"> <img src="docs/images/pdos_ipr.png" width="420">
 <img src="docs/images/pdos_Hf.png" width="420">
