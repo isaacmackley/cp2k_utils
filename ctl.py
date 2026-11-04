@@ -11,6 +11,8 @@ import matplotlib.colors as mcolors
 from matplotlib.ticker import MaxNLocator
 from collections import defaultdict
 
+from cp2k_utils.tools import style_axes
+
 
 plt.rcParams['font.family'] = 'Arial'
 Ha_to_eV = 27.211386
@@ -312,6 +314,12 @@ class StyleOptions:
     bypassed_alpha: float = 0.45
     leader_linewidth: float = 1.0
     ctl_colour: str = None
+    violin_alpha: float = 0.35          # style_kind='violin' fill opacity
+    strip_alpha: float = 0.6            # style_kind='strip' per-site line opacity
+
+    # --- band-edge spread across cells (amorphous ensembles) ---
+    show_edge_spread: bool = True       # hatched strip between min and max cell VBM/CBM
+    edge_spread_hatch: str = '///'
 
 
 
@@ -349,6 +357,41 @@ def _vgradient(ax, x_start, x_end, y_lo, y_hi, color, fade_direction,
     rgba[:, 0, 3] = col
     ax.imshow(rgba, aspect='auto', extent=[x_start, x_end, y_lo, y_hi],
               origin='lower', zorder=0, interpolation='bilinear')
+
+def _edge_spread(ax, lo, hi, colour, opts, x=None, y=None):
+    """
+    Hatched strip marking the min-max range of a band edge across cells.
+    Give x=(x0, x1) for a horizontal strip spanning lo..hi in y
+    (plot_multi_mat_ctl), or neither for a vertical strip spanning lo..hi in
+    x (plot_range_ctl). Nothing is drawn if there is no spread.
+    """
+    if not opts.show_edge_spread or hi - lo < 1e-9:
+        return
+    kw = dict(facecolor=mcolors.to_rgba(colour, opts.band_alpha * 0.25),
+              edgecolor=mcolors.to_rgba(colour, min(1.0, opts.band_alpha + 0.2)),
+              hatch=opts.edge_spread_hatch, lw=0, zorder=1)
+    if x is not None:
+        ax.fill_between(list(x), lo, hi, **kw)
+    else:
+        ax.axvspan(lo, hi, **kw)
+
+
+def _edge_spread_handle(opts):
+    """Legend proxy for the hatched band-edge spread."""
+    from matplotlib.patches import Patch
+    return Patch(facecolor='none', edgecolor='0.4', hatch=opts.edge_spread_hatch,
+                 label='band edge range\nacross cells')
+
+
+def _kde(values, grid):
+    """Gaussian KDE (Scott bandwidth) of `values` on `grid`; numpy only."""
+    v = np.asarray(values, dtype=float)
+    bw = 1.06 * v.std(ddof=1) * len(v) ** (-1 / 5)
+    if not np.isfinite(bw) or bw <= 0:
+        return None
+    z = (grid[:, None] - v[None, :]) / bw
+    return np.exp(-0.5 * z ** 2).sum(axis=1)
+
 
 def _group_configurations(defects):
     """
@@ -813,7 +856,7 @@ def plot_ctl(defects, bulk, vbm, cbm, style=None, save=True, show=False, save_fo
     #     plt.savefig(f'{title} CTL Diagram.pdf', bbox_inches='tight', dpi=300)
 
 
-def plot_range_ctl(defects, material, shade=True, title=None,
+def plot_range_ctl(defects, material, shade=True, title=None, style=None,
                    save=True, show=False, save_format='pdf', filename=None):
     """
     Overlay formation-energy lines for every site/cell of one defect type
@@ -832,7 +875,12 @@ def plot_range_ctl(defects, material, shade=True, title=None,
     shade : bool
         Fill the band between the lowest and highest formation energy across
         sites at each Fermi level.
+    style : StyleOptions | None
+        Uses figsize, title, band_alpha, axes/ticks fontsizes, xlim, ylim and
+        show_edge_spread (hatched strips at the min-max VBM/CBM of the cells).
     """
+    opts = style or StyleOptions()
+    title = title or opts.title
     configs = _group_configurations(defects)
     if not configs:
         raise ValueError('No defects supplied to plot_range_ctl.')
@@ -868,19 +916,30 @@ def plot_range_ctl(defects, material, shade=True, title=None,
     ymin = round(float(envelopes.min()) - 1)
     ymax = round(float(envelopes.max()) + 1)
  
-    fig, ax = plt.subplots(figsize=(15, 10))
+    if opts.ylim is not None:
+        ymin, ymax = opts.ylim
+
+    fig, ax = plt.subplots(figsize=opts.figsize or (15, 10))
     if title:
         ax.set_title(title, size=40, pad=30)
-    ax.set_xlabel('Fermi Energy (eV)', size=30, labelpad=30)
-    ax.set_ylabel('Formation Energy (eV)', size=30, labelpad=30)
- 
-    # VB/CB guides at the mean edges.
+    ax.set_xlabel('Fermi Energy (eV)', size=opts.axes_fontsize, labelpad=30)
+    ax.set_ylabel('Formation Energy (eV)', size=opts.axes_fontsize, labelpad=30)
+
+    # Band edges of every cell on the shared (mean-VBM = 0) axis. Solid
+    # shading runs up to the edge that every cell agrees on; the hatched
+    # strips show how far the edge moves from cell to cell.
+    vbms = [c.vbm_eV - mean_vbm for c in material.cells]
+    cbms = [c.cbm_eV - mean_vbm for c in material.cells]
+    v_lo, v_hi = min(vbms), max(vbms)
+    c_lo, c_hi = min(cbms), max(cbms)
     ax.axvline(x=0, color='tab:green', linestyle='-', alpha=0.5)
     ax.axvline(x=band_gap, color='tab:orange', linestyle='-', alpha=0.5)
-    gradient_fill(ax, -PAD, 0, ymin, ymax, 'tab:green',
-                  fade_direction='right', alpha_max=0.3)
-    gradient_fill(ax, band_gap, xmax, ymin, ymax, 'tab:orange',
-                  fade_direction='left', alpha_max=0.3)
+    gradient_fill(ax, -PAD, v_lo, ymin, ymax, 'tab:green',
+                  fade_direction='right', alpha_max=opts.band_alpha)
+    gradient_fill(ax, c_hi, xmax, ymin, ymax, 'tab:orange',
+                  fade_direction='left', alpha_max=opts.band_alpha)
+    _edge_spread(ax, v_lo, v_hi, 'tab:green', opts)
+    _edge_spread(ax, c_lo, c_hi, 'tab:orange', opts)
  
     colour = '#1E88E5'
     if shade:
@@ -890,16 +949,10 @@ def plot_range_ctl(defects, material, shade=True, title=None,
     # Bold the overall lowest envelope (the physically observed ground state).
     ax.plot(E_fermi, lo, lw=3, color=colour, zorder=4)
  
-    ax.set_xlim(-PAD, xmax)
-    set_integer_yticks(ax, ymin, ymax, fontsize=20)
-    ax.tick_params(axis='both', which='major', direction='in',
-                   length=6, width=1.5, labelsize=20)
-    ax.tick_params(axis='both', which='minor', direction='in', length=3)
-    ax.minorticks_on()
-    for spine in ax.spines.values():
-        spine.set_linewidth(1.5)
-    ax.grid(visible=False)
- 
+    ax.set_xlim(opts.xlim if opts.xlim is not None else (-PAD, xmax))
+    set_integer_yticks(ax, ymin, ymax, fontsize=opts.ticks_fontsize)
+    style_axes(ax, opts.ticks_fontsize)
+
     if filename is None:
         filename = f'{label} Range CTL Diagram.{save_format}'
     if save:
@@ -1150,9 +1203,18 @@ def _ensemble_ctls(defects, material):
     """
     For one defect type in one material, compute per-site CTLs and collect them
     by transition. Returns dict:
-        transition -> {'values': [E_fermi...], 'kind': 'thermo'|'bypassed',
-                       'skipped': bool}
-    All E_fermi relative to each site's own cell VBM.
+        transition -> {'values': [E_fermi...],           # sites where it is a
+                                                          # thermodynamic level
+                       'bypassed_values': [E_fermi...],  # sites where it is
+                                                          # bypassed (negative-U)
+                       'kind': 'thermo'|'bypassed',       # 'thermo' if any site
+                                                          # has it as a real level
+                       'skipped': bool,
+                       'n_sites': int}                    # configurations total
+    A site only contributes to 'values' if the transition is a real
+    (thermodynamic) level at that site, so the distribution is never mixed with
+    bypassed crossings from other sites. All E_fermi relative to each site's
+    own cell VBM.
     """
     configs = _group_configurations(defects)
     agg = {}
@@ -1161,12 +1223,14 @@ def _ensemble_ctls(defects, material):
         for t in compute_ctls(rows, cell.vbm_eV, cell.bulk):
             tr = t['transition']
             if tr not in agg:
-                agg[tr] = {'values': [], 'kind': t['kind'],
-                           'skipped': t.get('skipped', False)}
-            agg[tr]['values'].append(t['E_fermi'])
+                agg[tr] = {'values': [], 'bypassed_values': [], 'kind': 'bypassed',
+                           'skipped': False, 'n_sites': len(configs)}
             if t['kind'] == 'thermo':
+                agg[tr]['values'].append(t['E_fermi'])
                 agg[tr]['kind'] = 'thermo'
                 agg[tr]['skipped'] = agg[tr]['skipped'] or t.get('skipped', False)
+            else:
+                agg[tr]['bypassed_values'].append(t['E_fermi'])
     return agg
 
 
@@ -1227,10 +1291,14 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
         Each owns its Cells. Band shading uses the min-max spread of cell edges.
     fermi_lines : FermiLevel | list[FermiLevel] | float | None
         Horizontal dashed Fermi guide(s).
-    style : 'bar'
-        Distribution display. 'bar' draws min/mean/max marks (today). The raw
-        per-site values are retained internally, so 'violin'/'strip' can be
-        added here later without touching the computation.
+    style_kind : 'bar' | 'violin' | 'strip'
+        How a distribution of CTLs (several sites/cells) is drawn:
+          'bar'    - min, mean and max lines with a shaded band between.
+          'violin' - a kernel density estimate of the values (cut at min/max),
+                     with the mean line and min/max ticks.
+          'strip'  - one thin line per site, plus the mean in bold. Shows every
+                     value; best for data exploration rather than publication.
+        A transition with a single value is always drawn as a single line.
     precomputed_ctls : dict | None
         Optional bypass for external CTLs you did not compute yourself:
             {material_name: {defect_name: [CTL, ...]}}
@@ -1243,17 +1311,17 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
     Returns
     -------
     (fig, ax, distributions)
-        distributions: {material: {defect: {transition: [values...]}}}
+        distributions: {material: {defect: {transition: entry}}}, where entry
+        has 'values' (E_F above that material's VBM at sites where it is a real
+        level), 'bypassed_values', 'kind' and 'n_sites'.
     """
 
     opts = style or StyleOptions()
     figsize = opts.figsize or (20,15)
     title = opts.title
 
-    if style_kind != 'bar':
-        warnings.warn(f"style_kind={style_kind!r} not yet implemented; using 'bar'.",
-                      stacklevel=2)
-        style_kind = 'bar'
+    if style_kind not in ('bar', 'violin', 'strip'):
+        raise ValueError(f"style_kind must be 'bar', 'violin' or 'strip', not {style_kind!r}")
  
     # Normalise fermi_lines.
     if fermi_lines is None:
@@ -1325,7 +1393,7 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
         mm = mat_by_name[mname]
         for entry in dmap.values():
             for tr in entry.values():
-                for v in tr['values']:
+                for v in tr['values'] + tr.get('bypassed_values', []):
                     ctl_axis_vals.append(mm.ctl_on_axis(v, ref_cbm_disp))
     lo_all = min(all_v + ctl_axis_vals) if ctl_axis_vals else min(all_v)
     hi_all = max(all_c + ctl_axis_vals) if ctl_axis_vals else max(all_c)
@@ -1376,20 +1444,23 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
     # (CBO-aligned) axis. The faded strips show genuine cell-to-cell edge
     # variation; the solid regions are the conservative band extents.
     n_span = len(material_spans)
+    any_spread = False
     for si, (m, start, end, centre) in enumerate(material_spans):
         x0 = xmin if si == 0 else start
         x1 = xmax if si == n_span - 1 else end
         v_lo, v_hi = m.vbm_spread_on_axis(ref_cbm_disp)
         c_lo, c_hi = m.cbm_spread_on_axis(ref_cbm_disp)
+        # Solid shading up to the edge every cell agrees on; hatched strip
+        # for the cell-to-cell range of the edge (amorphous ensembles).
         _vgradient(ax, x0, x1, ymin, v_lo, 'tab:green', 'down', opts.band_alpha)
-        ax.fill_between([x0, x1], v_lo, v_hi, color='tab:green',
-                        alpha=opts.band_alpha * 0.5, lw=0, zorder=0)
         _vgradient(ax, x0, x1, c_hi, ymax, 'tab:orange', 'up', opts.band_alpha)
-        ax.fill_between([x0, x1], c_lo, c_hi, color='tab:orange',
-                        alpha=opts.band_alpha * 0.5, lw=0, zorder=0)
+        _edge_spread(ax, v_lo, v_hi, 'tab:green', opts, x=(x0, x1))
+        _edge_spread(ax, c_lo, c_hi, 'tab:orange', opts, x=(x0, x1))
+        if v_hi - v_lo > 1e-9 or c_hi - c_lo > 1e-9:
+            any_spread = True
         if opts.band_edge_lines:
-            v_mean = 0.5 * (v_lo + v_hi)
-            c_mean = 0.5 * (c_lo + c_hi)
+            v_mean = m.vbm_on_axis(ref_cbm_disp)
+            c_mean = m.cbm_on_axis(ref_cbm_disp)
             ax.hlines(v_mean, x0, x1, color='tab:green', linestyle='-',
                       lw=1.5, alpha=0.6, zorder=1)
             ax.hlines(c_mean, x0, x1, color='tab:orange', linestyle='-',
@@ -1406,10 +1477,9 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
     for x_centre, dname, mname in columns:
         m = mat_by_name[mname]
         dist = distributions[mname][dname]
-        thermo_items = [(tr, d) for tr, d in dist.items()
-                        if d.get('kind', 'thermo') == 'thermo']
+        thermo_items = [(tr, d) for tr, d in dist.items() if d.get('values')]
         bypassed_items = [(tr, d) for tr, d in dist.items()
-                          if d.get('kind') == 'bypassed']
+                          if d.get('bypassed_values')]
         thermo_items.sort(key=lambda kv: max(_parse_transition(kv[0])),
                           reverse=True)
         n_t = len(thermo_items)
@@ -1425,13 +1495,35 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
             colour = colour_for(trans)
             seen_transitions.setdefault(trans, colour)
 
-            common_vals = [m.ctl_on_axis(v, ref_cbm_disp) for v in values]
+            common_vals = np.array([m.ctl_on_axis(v, ref_cbm_disp) for v in values])
             lo, mean, hi = summarize(common_vals)
             lw = opts.ctl_linewidth
+            # half-width available to this mark without touching neighbours
+            half = 0.1 if n_t <= 1 else min(0.1, 0.45 * w)
+            density = None
+            if style_kind == 'violin' and hi > lo and len(common_vals) > 2:
+                grid = np.linspace(lo, hi, 200)
+                density = _kde(common_vals, grid)
             if lo == hi:
                 ax.hlines(mean, xm - 0.1, xm + 0.1, lw=lw, colors=colour,
                           zorder=5)
                 right = xm + 0.1
+            elif density is not None:
+                width = half * density / density.max()
+                ax.fill_betweenx(grid, xm - width, xm + width, color=colour,
+                                 alpha=opts.violin_alpha, lw=0, zorder=4)
+                ax.plot(np.r_[xm - width, (xm + width)[::-1]],
+                        np.r_[grid, grid[::-1]], color=colour, lw=1, zorder=4)
+                ax.hlines([lo, hi], xm - 0.3 * half, xm + 0.3 * half,
+                          lw=lw * 0.6, colors=colour, zorder=5)
+                ax.hlines(mean, xm - half, xm + half, lw=lw, colors=colour, zorder=5)
+                right = xm + half
+            elif style_kind == 'strip':
+                ax.hlines(common_vals, xm - 0.6 * half, xm + 0.6 * half,
+                          lw=max(1.0, lw * 0.4), colors=colour,
+                          alpha=opts.strip_alpha, zorder=4)
+                ax.hlines(mean, xm - half, xm + half, lw=lw, colors=colour, zorder=5)
+                right = xm + half
             else:
                 ax.fill_between([xm - 0.05, xm + 0.05], lo, hi,
                                 color=colour, alpha=0.2, lw=0)
@@ -1445,7 +1537,7 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
 
         if opts.show_bypassed:
             for trans, entry in bypassed_items:
-                values = entry['values']
+                values = entry['bypassed_values']
                 if not values:
                     continue
                 colour = colour_for(trans)
@@ -1482,9 +1574,13 @@ def plot_multi_mat_ctl(defects, materials, fermi_lines=None,
             handles.append(Line2D([0], [0], color=fl.colour or 'k',
                                    lw=3, linestyle='--'))
             labels.append(fl.label)
+        if any_spread and opts.show_edge_spread:
+            h = _edge_spread_handle(opts)
+            handles.append(h)
+            labels.append(h.get_label())
         if handles:
-            ax.legend(handles, labels, loc='center right', fontsize=opts.legend_fontsize,
-                      frameon=True)
+            ax.legend(handles, labels, loc='center left', bbox_to_anchor=(1.01, 0.5),
+                      fontsize=opts.legend_fontsize, frameon=False)
  
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
     ax.tick_params(axis='both', which='major', direction='in',
