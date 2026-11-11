@@ -608,7 +608,7 @@ def plot_ctl(defects, bulk, vbm, cbm, style=None, save=True, show=False, save_fo
  
         title_text = (first.title or first.label) + ' Charge Levels'
  
-        fig, ax = plt.subplots(figsize=(15, 10))
+        fig, ax = plt.subplots(figsize=figsize)
         if opts.show_title:
             ax.set_title(title_text, size=40, pad=30)
         ax.set_xlabel('Fermi Energy (eV)', size=opts.axes_fontsize, labelpad=30)

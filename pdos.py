@@ -159,11 +159,30 @@ class PDOSPlotter:
         Dashed vertical line at this calculation's HOMO (on the shifted axis).
     vbm : float | None
         Optional extra dashed vertical line at this x position (eV).
+
+    Appearance / output
+    -------------------
+    figw, figh, axes_fontsize, ticks_fontsize, legend_fontsize
+        Figure size (inches) and font sizes. To match plot_ctl's defaults use
+        figw=15, figh=10, axes_fontsize=30, ticks_fontsize=20 (or whatever
+        you passed in StyleOptions), legend_fontsize=20.
+    labelpad : float
+        Gap between the axis labels and the axes (plot_ctl uses 30).
+    linewidth : float
+        Width of the DOS lines (plot_ctl's formation-energy lines use 3).
+    save_format : str | None
+        File format for every saved figure, e.g. 'pdf'. None keeps the
+        defaults: '<element>_DOS.png', `output`, 'DOS_IPR.png'. When set,
+        the extension of `output` is replaced by it.
+    dpi : float | None
+        Resolution of saved figures (plot_ctl saves at 300). None uses
+        matplotlib's default.
     """
 
     def __init__(self, elements, spin=True, grid=False, sigma=0.003, vbm=None, xmin=-3, xmax=6,
                  figw=25, figh=10, output='DOS.png', axes_fontsize=30, ticks_fontsize=20,
-                 legend_fontsize=20, orbital_colours=None, ref_energy=None, homo_line=True):
+                 legend_fontsize=20, orbital_colours=None, ref_energy=None, homo_line=True,
+                 labelpad=20, linewidth=2, save_format=None, dpi=None):
         if isinstance(ref_energy, str):
             ref_energy = read_pdos_fermi(ref_energy)
         self.ref_energy = ref_energy
@@ -178,6 +197,10 @@ class PDOSPlotter:
         self.figw = figw
         self.figh = figh
         self.output = output
+        self.labelpad = labelpad
+        self.linewidth = linewidth
+        self.save_format = save_format
+        self.dpi = dpi
         self.axes_fontsize = axes_fontsize
         self.ticks_fontsize = ticks_fontsize
         self.legend_fontsize = legend_fontsize
@@ -187,8 +210,8 @@ class PDOSPlotter:
 
     def _new_axes(self):
         fig, ax = plt.subplots(figsize=(self.figw, self.figh))
-        ax.set_xlabel('Energy (eV)', size=self.axes_fontsize, labelpad=20)
-        ax.set_ylabel('Density of States (arb.)', size=self.axes_fontsize, labelpad=20)
+        ax.set_xlabel('Energy (eV)', size=self.axes_fontsize, labelpad=self.labelpad)
+        ax.set_ylabel('Density of States (arb.)', size=self.axes_fontsize, labelpad=self.labelpad)
         if self.homo_line:
             ax.axvline(x=self.homo_position, color='k', linestyle='--', alpha=0.5)
         if self.vbm is not None:
@@ -215,6 +238,16 @@ class PDOSPlotter:
             ax.grid(visible=True)
         ax.legend(frameon=False, fontsize=self.legend_fontsize)
 
+    def _filename(self, name):
+        """Apply save_format (if set) to a default file name."""
+        if self.save_format is None:
+            return name
+        stem = os.path.splitext(name)[0]
+        return f"{stem}.{self.save_format.lstrip('.')}"
+
+    def _save(self, fig, name):
+        fig.savefig(self._filename(name), bbox_inches='tight', dpi=self.dpi)
+
     def _orbital_colour(self, label, i):
         return self.orbital_colours.get(label, ORBITAL_FALLBACK[i % len(ORBITAL_FALLBACK)])
 
@@ -224,9 +257,9 @@ class PDOSPlotter:
         for element in self.elements:
             x, alpha, beta = element.extract_orbitals()
             color = ELEMENT_COLOURS[element.name]
-            ax.plot(x, np.sum(alpha, axis=0), label=element.name, color=color, lw=2)
+            ax.plot(x, np.sum(alpha, axis=0), label=element.name, color=color, lw=self.linewidth)
             if self.spin:
-                ax.plot(x, np.sum(beta, axis=0), color=color, lw=2)
+                ax.plot(x, np.sum(beta, axis=0), color=color, lw=self.linewidth)
             ymax = max(ymax, element.get_ymax(self.xmin, self.xmax, total=True))
         return ymax
 
@@ -259,12 +292,13 @@ class PDOSPlotter:
 
             for i, (label, alpha_vals) in enumerate(zip(labels, alpha)):
                 colour = self._orbital_colour(label, i)
-                ax.plot(x, alpha_vals, label=f"{element.name} {label}", color=colour, lw=2)
+                ax.plot(x, alpha_vals, label=f"{element.name} {label}", color=colour,
+                        lw=self.linewidth)
                 if self.spin:
-                    ax.plot(x, beta[i], color=colour, lw=2)
+                    ax.plot(x, beta[i], color=colour, lw=self.linewidth)
 
             self._finish_axes(ax, element.get_ymax(self.xmin, self.xmax, total=True))
-            fig.savefig(f"{element.name}_DOS.png", bbox_inches='tight')
+            self._save(fig, f"{element.name}_DOS.png")
             figs[element.name] = (fig, ax)
             if show:
                 plt.show()
@@ -290,7 +324,7 @@ class PDOSPlotter:
         fig, ax = self._new_axes()
         ymax = self._plot_totals(ax)
         self._finish_axes(ax, ymax)
-        fig.savefig(self.output, bbox_inches='tight')
+        self._save(fig, self.output)
         if show:
             plt.show()
         return fig, ax
@@ -315,7 +349,7 @@ class PDOSPlotter:
             return (data[:, 0] - zero) * Ha_to_eV, data[:, 1]
 
         ax2 = ax.twinx()
-        ax2.set_ylabel('IPR', size=self.axes_fontsize, labelpad=20)
+        ax2.set_ylabel('IPR', size=self.axes_fontsize, labelpad=self.labelpad)
         # draw the IPR sticks behind the DOS lines
         ax.set_zorder(ax2.get_zorder() + 1)
         ax.patch.set_visible(False)
@@ -334,7 +368,7 @@ class PDOSPlotter:
         ax2.set_yticks([])
         ax2.set_yticks([], minor=True)
 
-        fig.savefig("DOS_IPR.png", bbox_inches='tight')
+        self._save(fig, "DOS_IPR.png")
         if show:
             plt.show()
         return fig, ax, ax2
