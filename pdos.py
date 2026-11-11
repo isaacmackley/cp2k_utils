@@ -17,11 +17,12 @@ DENSITY_COLUMN = 3
 
 class ElementPDOS:
 
-    def __init__(self,name,index,spin,sigma):
+    def __init__(self,name,index,spin,sigma,ref_energy=None):
         self.name = name
         self.index = index
         self.spin = spin
         self.sigma = sigma
+        self.ref_energy = ref_energy   # Ha; None -> this file's E(Fermi) (HOMO)
         self.alpha_file = None
         self.beta_file = None
         self.data = self.load_pdos_data()
@@ -41,9 +42,10 @@ class ElementPDOS:
     def load_pdos_data(self):
         self.find_files()
         if self.spin:
-            return smeared_pdos([self.alpha_file, self.beta_file], self.sigma)
+            return smeared_pdos([self.alpha_file, self.beta_file], self.sigma,
+                                ref_energy=self.ref_energy)
         else:
-            return smeared_pdos([self.alpha_file], self.sigma)
+            return smeared_pdos([self.alpha_file], self.sigma, ref_energy=self.ref_energy)
     
     def smear_data(self):
 
@@ -131,15 +133,46 @@ ORBITAL_FALLBACK = ['#E69F00', '#56B4E9', '#F0E442', '#000000']
 plt.rcParams['font.family'] = 'Arial'   # match the CTL plots
 
 
-class PDOSPlotter:
+def read_pdos_fermi(path):
+    """E(Fermi) in Ha from the header of a CP2K .pdos file (the HOMO for OT /
+    insulating calculations)."""
+    with open(path) as fh:
+        match = HEADER_MATCH.match(fh.readline().rstrip())
+    if not match:
+        raise ValueError(f"The file '{path}' does not look like a CP2K PDOS output.")
+    return float(match.group('Efermi'))
 
-    def __init__(self, elements, spin=True, grid=False, sigma=0.003, vbm=0, xmin=-3, xmax=6,
+
+class PDOSPlotter:
+    """
+    Energy axis
+    -----------
+    ref_energy : None | float | str
+        What is placed at 0 eV on the x axis.
+          None  - this calculation's own HOMO (the E(Fermi) in its PDOS headers).
+          float - an absolute eigenvalue in Ha, e.g. the VBM of the pristine
+                  cell, so PDOS of different defects / charge states share one
+                  axis and can be compared directly.
+          str   - path to a .pdos file of the pristine cell; its header
+                  E(Fermi) is used as the reference.
+    homo_line : bool
+        Dashed vertical line at this calculation's HOMO (on the shifted axis).
+    vbm : float | None
+        Optional extra dashed vertical line at this x position (eV).
+    """
+
+    def __init__(self, elements, spin=True, grid=False, sigma=0.003, vbm=None, xmin=-3, xmax=6,
                  figw=25, figh=10, output='DOS.png', axes_fontsize=30, ticks_fontsize=20,
-                 legend_fontsize=20, orbital_colours=None):
-        self.elements = [ElementPDOS(name, i + 1, spin, sigma) for i, name in enumerate(elements)]
+                 legend_fontsize=20, orbital_colours=None, ref_energy=None, homo_line=True):
+        if isinstance(ref_energy, str):
+            ref_energy = read_pdos_fermi(ref_energy)
+        self.ref_energy = ref_energy
+        self.elements = [ElementPDOS(name, i + 1, spin, sigma, ref_energy)
+                         for i, name in enumerate(elements)]
         self.spin = spin
         self.grid = grid
         self.vbm = vbm
+        self.homo_line = homo_line
         self.xmin = xmin
         self.xmax = xmax
         self.figw = figw
@@ -156,9 +189,22 @@ class PDOSPlotter:
         fig, ax = plt.subplots(figsize=(self.figw, self.figh))
         ax.set_xlabel('Energy (eV)', size=self.axes_fontsize, labelpad=20)
         ax.set_ylabel('Density of States (arb.)', size=self.axes_fontsize, labelpad=20)
-        ax.axvline(x=self.vbm, color='k', linestyle='--', alpha=0.5)
+        if self.homo_line:
+            ax.axvline(x=self.homo_position, color='k', linestyle='--', alpha=0.5)
+        if self.vbm is not None:
+            ax.axvline(x=self.vbm, color='k', linestyle='--', alpha=0.5)
         ax.axhline(y=0, color='k', linestyle='-', lw=1, alpha=0.5)
         return fig, ax
+
+    @property
+    def zero_energy(self):
+        """Absolute energy (Ha) placed at 0 on the x axis."""
+        return self.ref_energy if self.ref_energy is not None else self._get_efermi()
+
+    @property
+    def homo_position(self):
+        """This calculation's HOMO on the plotted axis (eV)."""
+        return (self._get_efermi() - self.zero_energy) * 27.211386
 
     def _finish_axes(self, ax, ymax):
         ax.set_xlim(self.xmin, self.xmax)
@@ -262,11 +308,11 @@ class PDOSPlotter:
         self._finish_axes(ax, ymax)
 
         Ha_to_eV = 27.211386
-        efermi = self._get_efermi()
+        zero = self.zero_energy
 
         def read_ipr(path):
             data = np.atleast_2d(np.loadtxt(path))
-            return (data[:, 0] - efermi) * Ha_to_eV, data[:, 1]
+            return (data[:, 0] - zero) * Ha_to_eV, data[:, 1]
 
         ax2 = ax.twinx()
         ax2.set_ylabel('IPR', size=self.axes_fontsize, labelpad=20)
@@ -309,7 +355,13 @@ EIGENVALUE_COLUMN = 1
 DENSITY_COLUMN = 3
 
 
-def smeared_pdos(pdosfilenames, sigma=0.02, de=0.001, scale=1, total_sum=False, no_header=False, output=None):
+def smeared_pdos(pdosfilenames, sigma=0.02, de=0.001, scale=1, total_sum=False, no_header=False,
+                 output=None, ref_energy=None):
+    """
+    Gaussian-smeared PDOS. Energies are returned in eV relative to
+    `ref_energy` (Ha) if given, otherwise to the highest E(Fermi) in the file
+    headers.
+    """
     alldata = []
     orb_headers = []
     efermi = -1000
@@ -350,7 +402,7 @@ def smeared_pdos(pdosfilenames, sigma=0.02, de=0.001, scale=1, total_sum=False, 
         print("Sum over all meshpoints, per orbital:")
         print(("{:16.8f}" * ncols).format(*finalsum))
 
-    xmesh -= efermi
+    xmesh -= efermi if ref_energy is None else ref_energy
     xmesh *= 27.211384
     ymesh *= scale
 

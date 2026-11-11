@@ -82,7 +82,7 @@ With no defects it draws just the band offset diagram.
 - the total for each element, in Jmol colours,
 - the total with the IPR of each state on a second axis. Spin-up sticks point up and spin-down sticks point down, like the DOS.
 
-`smeared_pdos` returns the smeared data without plotting. The older function interface (`pdos_plot`, `ipr_pdos_plot`) is still available in the same module. The original module is archived in `old/pdos_old.py`.
+By default 0 eV is the calculation's own HOMO. With `ref_energy` (an eigenvalue in Ha, or a pristine cell's `.pdos` file) you can set 0 to the pristine VBM instead, so PDOS of different defects and charge states line up; the dashed line still marks the HOMO. `smeared_pdos` returns the smeared data without plotting. The older function interface (`pdos_plot`, `ipr_pdos_plot`) is still available in the same module. The original module is archived in `old/pdos_old.py`.
 
 <img src="docs/images/pdos_total.png" width="420"> <img src="docs/images/pdos_ipr.png" width="420">
 <img src="docs/images/pdos_Hf.png" width="420">
